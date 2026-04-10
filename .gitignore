@@ -72,11 +72,11 @@ nbproject/
 *.vcxproj.filters
 
 # Database files
-db.sql
+# db.sql
 
 # Documentation files
-*.pdf
-*.docx
+# *.pdf
+# *.docx
 
 # Temporary files
 *.tmp
