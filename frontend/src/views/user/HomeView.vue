@@ -1,0 +1,843 @@
+<template>
+  <div class="home">
+    <Header />
+    <main class="main-content">
+      <!-- Banner轮播图 -->
+      <section class="banner-slider">
+        <div class="slider-container">
+          <div 
+            v-for="(banner, index) in banners" 
+            :key="banner.id"
+            class="banner-slide"
+            :class="{ active: index === currentBanner }"
+          >
+            <div class="banner-image">
+              <img :src="banner.image" :alt="banner.title">
+            </div>
+            <div class="banner-content">
+              <h2>{{ banner.title }}</h2>
+              <p>{{ banner.subtitle }}</p>
+              <div class="banner-actions">
+                <router-link to="/products" class="btn btn-primary">
+                  立即选购 🐾
+                </router-link>
+              </div>
+            </div>
+          </div>
+          <!-- 轮播指示器 -->
+          <div class="slider-indicators">
+            <span 
+              v-for="(banner, index) in banners" 
+              :key="banner.id"
+              class="indicator"
+              :class="{ active: index === currentBanner }"
+              @click="currentBanner = index"
+            ></span>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 分类导航 -->
+      <section class="category-nav">
+        <div class="container">
+          <div class="categories">
+            <router-link 
+              v-for="category in categories" 
+              :key="category.codeIndex"
+              :to="`/products?category=${category.codeIndex}`" 
+              class="category-item"
+              :class="category.codeIndex"
+            >
+              <span class="category-icon">{{ category.icon || '�' }}</span>
+              <span class="category-text">{{ category.indexName }}</span>
+            </router-link>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 推荐商品 -->
+      <section class="featured-products">
+        <div class="container">
+          <div class="section-header">
+            <h2>热门推荐</h2>
+            <router-link to="/products" class="view-all">查看全部</router-link>
+          </div>
+          
+          <!-- 加载状态 -->
+          <div v-if="loading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+          
+          <!-- 错误提示 -->
+          <div v-else-if="error" class="error-container">
+            <p>{{ error }}</p>
+            <button class="btn btn-primary" @click="fetchProducts">重新加载</button>
+          </div>
+          
+          <!-- 商品列表 -->
+          <div v-else class="products-grid">
+            <div v-for="product in products" :key="product.id">
+              <router-link :to="`/product/${product.id}`" class="product-card-link">
+                <div class="product-card">
+                  <!-- 商品标签 -->
+                  <div class="product-tag" :class="product.chongwuyongpinTypes === '1' ? 'hot' : product.chongwuyongpinTypes === '2' ? 'new' : 'sale'">
+                    {{ product.chongwuyongpinTypes === '1' ? '热销' : product.chongwuyongpinTypes === '2' ? '新品' : '促销' }}
+                  </div>
+                  
+                  <!-- 商品图片 -->
+                  <div class="product-image">
+                    <img :src="product.chongwuyongpinPhoto ? 'http://localhost:8080/wangshangchongwudian/' + product.chongwuyongpinPhoto : 'https://via.placeholder.com/300x300'" :alt="product.chongwuyongpinName">
+                  </div>
+                  
+                  <!-- 商品信息 -->
+                  <div class="product-info">
+                    <h3 class="product-title">{{ product.chongwuyongpinName }}</h3>
+                    <p class="product-desc">{{ product.chongwuyongpinContent || '专为宠物设计，健康安全，品质保证' }}</p>
+                    <div class="product-price-row">
+                      <span class="product-price">¥{{ product.chongwuyongpinNewMoney || product.chongwuyongpinOldMoney }}</span>
+                      <span v-if="product.chongwuyongpinOldMoney" class="product-original-price">¥{{ product.chongwuyongpinOldMoney }}</span>
+                    </div>
+                  </div>
+                </div>
+              </router-link>
+            </div>
+            
+            <!-- 无商品时的提示 -->
+            <div v-if="products.length === 0" class="empty-container">
+              <p>暂无商品</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 最新资讯 -->
+      <section class="latest-news">
+        <div class="container">
+          <div class="section-header">
+            <h2>宠物资讯</h2>
+            <router-link to="/news" class="view-all">查看全部</router-link>
+          </div>
+          
+          <div class="news-grid">
+            <div v-for="item in news" :key="item.id">
+              <router-link :to="`/news/detail/${item.id}`" class="news-card-link">
+                <div class="news-card">
+                  <div class="news-image">
+                    <img :src="item.newsPhoto ? 'http://localhost:8080/wangshangchongwudian/' + item.newsPhoto : 'https://via.placeholder.com/400x200'" :alt="item.newsTitle">
+                  </div>
+                  <div class="news-content">
+                    <h3 class="news-title">{{ item.newsTitle }}</h3>
+                    <p class="news-desc">{{ item.newsContent || '这里是资讯内容摘要，为您提供专业的宠物护理建议和知识...' }}</p>
+                    <div class="news-meta">
+                      <span class="news-time">{{ item.insertTime || '2026-03-27' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </router-link>
+            </div>
+            
+            <!-- 无新闻时的提示 -->
+            <div v-if="news.length === 0" class="empty-container">
+              <p>暂无资讯</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import Header from '../../components/Header.vue'
+import Footer from '../../components/Footer.vue'
+import { chongwuyongpinApi, newsApi, configApi, dictionaryApi } from '../../utils/api'
+
+// 状态管理
+const products = ref([])
+const news = ref([])
+const loading = ref(false)
+const error = ref(null)
+const banners = ref([])
+const categories = ref([])
+
+// 当前轮播图索引
+const currentBanner = ref(0)
+
+// 获取商品列表
+const fetchProducts = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await chongwuyongpinApi.getList({ page: 1, limit: 6 })
+    if (response.code === 0) {
+      products.value = response.data.list || []
+    } else {
+      error.value = '获取商品列表失败'
+    }
+  } catch (err) {
+    error.value = '获取商品列表失败'
+    console.error('获取商品列表失败:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取新闻列表
+const fetchNews = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await newsApi.getList({ page: 1, limit: 3 })
+    if (response.code === 0) {
+      news.value = response.data.list || []
+    } else {
+      error.value = '获取新闻列表失败'
+    }
+  } catch (err) {
+    error.value = '获取新闻列表失败'
+    console.error('获取新闻列表失败:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取轮播图数据
+const fetchBanners = async () => {
+  try {
+    const response = await configApi.getList({ page: 1, limit: 5 })
+    if (response.code === 0) {
+      // 处理轮播图数据，添加完整的图片路径
+      banners.value = response.data.list.map(item => ({
+        id: item.id,
+        title: item.name,
+        subtitle: '',
+        image: `http://localhost:8080/wangshangchongwudian/${item.value}`
+      }))
+    }
+  } catch (err) {
+    console.error('获取轮播图失败:', err)
+    // 如果获取失败，使用默认轮播图
+    banners.value = [
+      {
+        id: 1,
+        title: '欢迎来到宠物电商平台',
+        subtitle: '用心呵护每一位毛孩子，为宠物提供优质的商品和服务',
+        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20pets%20in%20pet%20shop%20banner%20with%20colorful%20background&image_size=landscape_16_9'
+      },
+      {
+        id: 2,
+        title: '新品上市',
+        subtitle: '全新宠物用品系列，给您的爱宠最好的呵护',
+        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=new%20pet%20products%20display%20in%20modern%20store&image_size=landscape_16_9'
+      },
+      {
+        id: 3,
+        title: '限时促销',
+        subtitle: '全场宠物用品低至5折，错过再等一年',
+        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=pet%20supplies%20sale%20promotion%20banner%20with%20discount&image_size=landscape_16_9'
+      }
+    ]
+  }
+}
+
+// 获取商品分类数据
+const fetchCategories = async () => {
+  try {
+    const response = await dictionaryApi.getByDicCode('chongwuyongpin_types')
+    if (response.code === 0) {
+      categories.value = response.data.list || []
+    }
+  } catch (err) {
+    console.error('获取商品分类失败:', err)
+    // 如果获取失败，使用默认分类
+    categories.value = [
+      { codeIndex: '1', indexName: '狗狗专区', icon: '🐶' },
+      { codeIndex: '2', indexName: '猫咪专区', icon: '🐱' },
+      { codeIndex: '3', indexName: '小宠专区', icon: '🐹' },
+      { codeIndex: '4', indexName: '水族专区', icon: '🐠' }
+    ]
+  }
+}
+
+// 轮播图自动切换
+const startBannerSlider = () => {
+  setInterval(() => {
+    currentBanner.value = (currentBanner.value + 1) % banners.value.length
+  }, 5000)
+}
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchBanners()
+  fetchCategories()
+  fetchProducts()
+  fetchNews()
+  startBannerSlider()
+})
+</script>
+
+<style scoped>
+.main-content {
+  padding: 0;
+}
+
+/* 轮播图样式 */
+.banner-slider {
+  position: relative;
+  height: 500px;
+  overflow: hidden;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.slider-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.banner-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.banner-slide.active {
+  opacity: 1;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.banner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  z-index: 10;
+  max-width: 800px;
+  padding: 0 var(--spacing-xl);
+}
+
+.banner-content h2 {
+  color: white;
+  font-size: var(--fs-3xl);
+  margin-bottom: var(--spacing-base);
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.banner-content p {
+  font-size: var(--fs-base);
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.banner-actions .btn {
+  font-size: var(--fs-lg);
+  padding: var(--spacing-base) var(--spacing-2xl);
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 轮播指示器 */
+.slider-indicators {
+  position: absolute;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--spacing-sm);
+  z-index: 20;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: white;
+  width: 24px;
+  border-radius: 6px;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(66, 184, 131, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: var(--spacing-base);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background: #fff2f0;
+  border-radius: var(--radius-base);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.error-container p {
+  margin-bottom: var(--spacing-base);
+  color: var(--danger);
+}
+
+/* 空状态 */
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background: #f7f9fc;
+  border-radius: var(--radius-base);
+  grid-column: 1 / -1;
+}
+
+.empty-container p {
+  color: var(--text-3);
+  font-size: var(--fs-base);
+}
+
+/* 分类导航 */
+.category-nav {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-base);
+}
+
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background: var(--card);
+  border-radius: var(--radius-base);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.category-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.category-icon {
+  font-size: 32px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.category-text {
+  color: var(--text-1);
+  font-weight: 500;
+  font-size: var(--fs-sm);
+}
+
+.category-item.dog {
+  border: 2px solid var(--dog);
+}
+
+.category-item.cat {
+  border: 2px solid var(--cat);
+}
+
+.category-item.small-pet {
+  border: 2px solid var(--small-pet);
+}
+
+.category-item.fish {
+  border: 2px solid var(--fish);
+}
+
+/* 模块标题 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-header h2 {
+  font-size: var(--fs-xl);
+  color: var(--text-1);
+  font-weight: 600;
+  margin: 0;
+}
+
+.view-all {
+  color: var(--text-3);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  transition: color 0.3s ease;
+}
+
+.view-all:hover {
+  color: var(--primary);
+}
+
+/* 商品卡片 */
+.featured-products {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.product-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card {
+  background: var(--card);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.product-card-link:hover .product-card {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.product-tag {
+  position: absolute;
+  top: var(--spacing-base);
+  right: var(--spacing-base);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  z-index: 10;
+}
+
+.product-tag.hot {
+  color: var(--danger);
+}
+
+.product-tag.new {
+  color: var(--primary);
+}
+
+.product-tag.sale {
+  color: var(--warning);
+}
+
+.product-image {
+  position: relative;
+  padding-top: 100%; /* 1:1 比例 */
+  overflow: hidden;
+}
+
+.product-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-info {
+  padding: var(--spacing-base);
+}
+
+.product-title {
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--text-1);
+  margin-bottom: var(--spacing-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-bottom: var(--spacing-base);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-base);
+}
+
+.product-price {
+  color: var(--danger);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.product-original-price {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  text-decoration: line-through;
+}
+
+/* 资讯卡片 */
+.latest-news {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.news-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.news-card {
+  background: var(--card);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.news-card-link:hover .news-card {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.news-image {
+  height: 180px;
+  overflow: hidden;
+}
+
+.news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.news-card:hover .news-image img {
+  transform: scale(1.05);
+}
+
+.news-content {
+  padding: var(--spacing-base);
+}
+
+.news-title {
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--text-1);
+  margin-bottom: var(--spacing-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  margin-bottom: var(--spacing-base);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.news-time {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+.read-more {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.read-more:hover {
+  color: var(--primary-dark);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  /* 轮播图适配 */
+  .banner-slider {
+    height: 300px;
+  }
+  
+  .banner-content h2 {
+    font-size: var(--fs-2xl);
+  }
+  
+  .banner-content p {
+    font-size: var(--fs-sm);
+  }
+  
+  .banner-actions .btn {
+    font-size: var(--fs-base);
+    padding: var(--spacing-sm) var(--spacing-xl);
+  }
+  
+  /* 分类导航适配 */
+  .categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .category-item {
+    padding: var(--spacing-lg);
+  }
+  
+  .category-icon {
+    font-size: 24px;
+  }
+  
+  /* 商品网格适配 */
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-base);
+  }
+  
+  .product-card {
+    font-size: var(--fs-sm);
+  }
+  
+  .product-info {
+    padding: var(--spacing-sm);
+  }
+  
+  /* 新闻网格适配 */
+  .news-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+  
+  .news-image {
+    height: 140px;
+  }
+  
+  /* 标题适配 */
+  .section-header h2 {
+    font-size: var(--fs-lg);
+  }
+  
+  /* 容器适配 */
+  .container {
+    padding: 0 var(--spacing-base);
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .banner-slider {
+    height: 400px;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .news-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 大屏幕适配 */
+@media (min-width: 1025px) {
+  .banner-slider {
+    height: 500px;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .news-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+</style>
