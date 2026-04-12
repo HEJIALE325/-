@@ -23,6 +23,21 @@
   </div>
 </template>
 <script>
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 export default {
   data() {
     return {
@@ -81,7 +96,8 @@ export default {
           } else if (this.user.password) {
             password = this.user.password;
           }
-          if (this.ruleForm.password != password) {
+          // 对原密码进行加密后比较
+          if (md5(this.ruleForm.password) != password) {
             this.$message.error("原密码错误");
             return;
           }
@@ -89,8 +105,10 @@ export default {
             this.$message.error("两次密码输入不一致");
             return;
           }
-          this.user.password = this.ruleForm.newpassword;
-          this.user.mima = this.ruleForm.newpassword;
+          // 对新密码进行加密
+          const encryptedNewPassword = md5(this.ruleForm.newpassword);
+          this.user.password = encryptedNewPassword;
+          this.user.mima = encryptedNewPassword;
           this.$http({
             url: `${this.$storage.get("sessionTable")}/update`,
             method: "post",

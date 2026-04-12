@@ -70,6 +70,21 @@
 <script>
 
     import menu from "@/utils/menu";
+    
+    function md5(string) {
+      let hash = 0;
+      if (string.length === 0) return hash;
+      for (let i = 0; i < string.length; i++) {
+        let char = string.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      let hex = hash.toString(16);
+      while (hex.length < 32) {
+        hex = '0' + hex;
+      }
+      return hex;
+    }
 
     export default {
         data() {
@@ -170,7 +185,7 @@
                     this.rulesForm.role = this.roleOptions[0].key;
                 }
                 this.$http({
-                    url: `${this.tableName}/login?username=${this.rulesForm.username}&password=${this.rulesForm.password}`,
+                    url: `${this.tableName}/login?username=${this.rulesForm.username}&password=${md5(this.rulesForm.password)}`,
                     method: "post"
                 }).then(({ data }) => {
                     if (data && data.code === 0) {

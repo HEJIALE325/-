@@ -21,6 +21,7 @@ import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.UsersEntity;
 import com.service.TokenService;
+import com.utils.MD5Utils;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
 import com.utils.R;
@@ -109,7 +110,7 @@ public class UsersController {
     	if(user==null) {
     		return R.error("账号不存在");
     	}
-    	user.setPassword("123456");
+    	user.setPassword(MD5Utils.md5("123456"));
         usersService.update(user,null);
         return R.ok("密码已重置为：123456");
     }
