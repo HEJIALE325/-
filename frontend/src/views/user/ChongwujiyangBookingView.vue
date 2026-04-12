@@ -3,22 +3,18 @@
     <Header />
     <main class="chongwujiyang-booking-content">
       <div class="container">
-        <!-- 页面标题 -->
         <div class="page-header">
           <h1>宠物寄养预约</h1>
           <p>为您的爱宠预约专业的寄养服务</p>
         </div>
 
-        <!-- 加载中 -->
         <div v-if="loading" class="loading">
           <div class="loading-spinner"></div>
           <p>加载中...</p>
         </div>
 
-        <!-- 预约表单 -->
         <div v-else-if="service" class="booking-form-container">
           <div class="booking-form">
-            <!-- 服务信息 -->
             <div class="service-info-section">
               <h3>服务信息</h3>
               <div class="service-card">
@@ -33,7 +29,6 @@
               </div>
             </div>
 
-            <!-- 日期选择 -->
             <div class="date-section">
               <h3>寄养日期</h3>
               <div class="date-picker">
@@ -52,7 +47,6 @@
               </div>
             </div>
 
-            <!-- 宠物信息 -->
             <div class="pet-info-section">
               <h3>宠物信息</h3>
               <div class="form-group">
@@ -74,7 +68,6 @@
               </div>
             </div>
 
-            <!-- 接送服务 -->
             <div class="service-option-section">
               <h3>接送服务</h3>
               <div class="form-group">
@@ -88,7 +81,6 @@
               </div>
             </div>
 
-            <!-- 提交按钮 -->
             <div class="submit-section">
               <button class="btn btn-primary" @click="submitBooking" :disabled="!isFormValid">提交预约</button>
               <button class="btn btn-secondary" @click="backToDetail">返回详情</button>
@@ -96,7 +88,6 @@
           </div>
         </div>
 
-        <!-- 无数据 -->
         <div v-else class="no-data">
           <p>服务不存在</p>
         </div>
@@ -122,7 +113,6 @@ const serviceTypes = ref([])
 const petTypeOptions = ref([])
 const shifouTypeOptions = ref([])
 
-// 表单数据 - 与后端实体类保持一致
 const form = ref({
   chongwujiyangId: null,
   yonghuId: null,
@@ -135,7 +125,6 @@ const form = ref({
   chongwujiyangYuyuePrice: 0
 })
 
-// 计算表单是否有效
 const isFormValid = computed(() => {
   return form.value.chongwujiyangYuyueName && 
          form.value.chongwuTypes !== null && 
@@ -145,10 +134,8 @@ const isFormValid = computed(() => {
          form.value.shifouTypes !== null
 })
 
-// 加载字典数据
 const loadDictionaryData = async () => {
   try {
-    // 获取寄养服务类型
     const serviceTypeResponse = await dictionaryApi.getPage({
       dicCode: 'chongwujiyang_types',
       page: 1,
@@ -158,7 +145,6 @@ const loadDictionaryData = async () => {
       serviceTypes.value = serviceTypeResponse.data.list || []
     }
     
-    // 获取宠物类型
     const petTypeResponse = await dictionaryApi.getPage({
       dicCode: 'chongwu_types',
       page: 1,
@@ -168,7 +154,6 @@ const loadDictionaryData = async () => {
       petTypeOptions.value = petTypeResponse.data.list || []
     }
     
-    // 获取是否接送类型
     const shifouTypeResponse = await dictionaryApi.getPage({
       dicCode: 'shifou_types',
       page: 1,
@@ -182,13 +167,11 @@ const loadDictionaryData = async () => {
   }
 }
 
-// 获取服务类型名称
 const getServiceTypeName = (typeCode) => {
   const type = serviceTypes.value.find(t => t.codeIndex === typeCode)
   return type ? type.indexName : '未知类型'
 }
 
-// 获取服务详情
 const getServiceDetail = async () => {
   try {
     loading.value = true
@@ -209,14 +192,12 @@ const getServiceDetail = async () => {
   }
 }
 
-// 计算总价格
 const calculateTotalPrice = () => {
   if (service.value && form.value.chongwujiyangYuyueNum > 0) {
     form.value.chongwujiyangYuyuePrice = (service.value.chongwujiyangNewMoney * form.value.chongwujiyangYuyueNum).toFixed(2)
   }
 }
 
-// 提交预约
 const submitBooking = async () => {
   if (!isFormValid.value) {
     message.error('请填写完整的预约信息')
@@ -224,22 +205,18 @@ const submitBooking = async () => {
   }
 
   try {
-    // 获取用户会话信息
     const sessionResponse = await yonghuApi.session()
     if (sessionResponse.code === 0 && sessionResponse.data) {
       form.value.yonghuId = sessionResponse.data.id || sessionResponse.data.yonghuId
       
-      // 构建预约数据 - 直接使用form对象，因为已经与后端结构匹配
       const bookingData = {
         ...form.value,
         t: Date.now()
       }
 
-      // 调用预约API
       const response = await chongwujiyangYuyueApi.add(bookingData)
       if (response.code === 0) {
         message.success('预约成功')
-        // 跳转到订单列表
         router.push('/user/pet-orders')
       } else {
         message.error(response.msg || '预约失败')
@@ -254,12 +231,10 @@ const submitBooking = async () => {
   }
 }
 
-// 返回详情
 const backToDetail = () => {
   router.push(`/chongwujiyang/detail/${route.params.id}`)
 }
 
-// 页面加载时获取字典数据和服务详情
 onMounted(() => {
   loadDictionaryData()
   getServiceDetail()
