@@ -149,7 +149,7 @@ public class YonghuController {
         YonghuEntity yonghuEntity = yonghuService.selectOne(queryWrapper);
         if(yonghuEntity==null){
             yonghu.setCreateTime(new Date());
-            yonghu.setPassword("123456");
+            yonghu.setPassword(MD5Utils.md5("123456"));
             yonghuService.insert(yonghu);
             return R.ok();
         }else {
@@ -222,7 +222,7 @@ public class YonghuController {
                             //循环
                             YonghuEntity yonghuEntity = new YonghuEntity();
 //                            yonghuEntity.setUsername(data.get(0));                    //账户 要改的
-//                            //yonghuEntity.setPassword("123456");//密码
+//                            //yonghuEntity.setPassword(MD5Utils.md5("123456"));//密码
 //                            yonghuEntity.setYonghuName(data.get(0));                    //用户姓名 要改的
 //                            yonghuEntity.setYonghuPhone(data.get(0));                    //联系方式 要改的
 //                            yonghuEntity.setYonghuIdNumber(data.get(0));                    //身份证号 要改的
@@ -352,7 +352,7 @@ public class YonghuController {
     @GetMapping(value = "/resetPassword")
     public R resetPassword(Integer  id, HttpServletRequest request) {
         YonghuEntity yonghu = yonghuService.selectById(id);
-        yonghu.setPassword("123456");
+        yonghu.setPassword(MD5Utils.md5("123456"));
         yonghuService.updateById(yonghu);
         return R.ok();
     }
@@ -387,7 +387,7 @@ public class YonghuController {
     public R resetPass(String username, HttpServletRequest request) {
         YonghuEntity yonghu = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("username", username));
         if(yonghu!=null){
-            yonghu.setPassword("123456");
+            yonghu.setPassword(MD5Utils.md5("123456"));
             yonghuService.updateById(yonghu);
             return R.ok();
         }else{
@@ -488,7 +488,7 @@ public class YonghuController {
         YonghuEntity yonghuEntity = yonghuService.selectOne(queryWrapper);
         if(yonghuEntity==null){
             yonghu.setCreateTime(new Date());
-        yonghu.setPassword("123456");
+        yonghu.setPassword(MD5Utils.md5("123456"));
         yonghuService.insert(yonghu);
 
             return R.ok();

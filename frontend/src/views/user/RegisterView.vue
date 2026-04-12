@@ -120,6 +120,22 @@ import { useRouter } from 'vue-router'
 import { yonghuApi } from '../../utils/api'
 import message from '../../utils/message'
 
+// MD5加密函数
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 const router = useRouter()
 const showPassword = ref(false)
 const isLoading = ref(false)
@@ -139,7 +155,13 @@ const handleRegister = async (e) => {
   try {
     isLoading.value = true
     
-    const response = await yonghuApi.register(form.value)
+    // 对密码进行MD5加密
+    const registerData = {
+      ...form.value,
+      password: md5(form.value.password)
+    }
+    
+    const response = await yonghuApi.register(registerData)
     if (response.code === 0) {
       message.success('注册成功，请登录')
       router.push('/user/login')
