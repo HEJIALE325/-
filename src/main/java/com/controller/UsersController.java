@@ -32,10 +32,10 @@ import com.utils.R;
 @RequestMapping("users")
 @RestController
 public class UsersController {
-	
+
 	@Autowired
 	private UsersService usersService;
-	
+
 	@Autowired
 	private TokenService tokenService;
 
@@ -46,7 +46,7 @@ public class UsersController {
 	@PostMapping(value = "/login")
 	public R login(String username, String password, String captcha, HttpServletRequest request) {
 		UsersEntity user = usersService.selectOne(new EntityWrapper<UsersEntity>().eq("username", username));
-		if(user==null || !user.getPassword().equals(MD5Utils.md5(password))) {
+		if(user==null || !user.getPassword().equals(password)) {
 			return R.error("账号或密码不正确");
 		}
 		String token = tokenService.generateToken(user.getId(),username, "users", user.getRole());
@@ -56,7 +56,7 @@ public class UsersController {
 		r.put("userId",user.getId());
 		return r;
 	}
-	
+
 	/**
 	 * 注册
 	 */
@@ -101,7 +101,7 @@ public class UsersController {
 		usersService.updateById(users);
 		return R.ok();
 	}
-	
+
 	/**
      * 密码重置
      */
@@ -116,7 +116,7 @@ public class UsersController {
         usersService.update(user,null);
         return R.ok("密码已重置为：123456");
     }
-	
+
 	/**
      * 列表
      */
@@ -133,7 +133,7 @@ public class UsersController {
     @RequestMapping("/list")
     public R list( UsersEntity user){
        	EntityWrapper<UsersEntity> ew = new EntityWrapper<UsersEntity>();
-      	ew.allEq(MPUtil.allEQMapPre( user, "user")); 
+      	ew.allEq(MPUtil.allEQMapPre( user, "user"));
         return R.ok().put("data", usersService.selectListView(ew));
     }
 
@@ -145,7 +145,7 @@ public class UsersController {
         UsersEntity user = usersService.selectById(id);
         return R.ok().put("data", user);
     }
-    
+
     /**
      * 获取用户的session用户信息
      */

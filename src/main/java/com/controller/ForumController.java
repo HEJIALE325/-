@@ -39,7 +39,6 @@ import com.alibaba.fastjson.*;
  * @email
 */
 @RestController
-@Controller
 @RequestMapping("/forum")
 public class ForumController {
     private static final Logger logger = LoggerFactory.getLogger(ForumController.class);

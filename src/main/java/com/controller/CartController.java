@@ -39,7 +39,6 @@ import com.alibaba.fastjson.*;
  * @email
 */
 @RestController
-@Controller
 @RequestMapping("/cart")
 public class CartController {
     private static final Logger logger = LoggerFactory.getLogger(CartController.class);

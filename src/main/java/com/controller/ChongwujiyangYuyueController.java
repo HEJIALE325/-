@@ -39,7 +39,6 @@ import com.alibaba.fastjson.*;
  * @email
 */
 @RestController
-@Controller
 @RequestMapping("/chongwujiyangYuyue")
 public class ChongwujiyangYuyueController {
     private static final Logger logger = LoggerFactory.getLogger(ChongwujiyangYuyueController.class);

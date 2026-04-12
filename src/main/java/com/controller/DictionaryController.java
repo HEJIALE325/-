@@ -39,7 +39,6 @@ import com.alibaba.fastjson.*;
  * @email
 */
 @RestController
-@Controller
 @RequestMapping("/dictionary")
 public class DictionaryController {
     private static final Logger logger = LoggerFactory.getLogger(DictionaryController.class);
