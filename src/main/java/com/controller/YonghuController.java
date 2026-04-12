@@ -366,13 +366,13 @@ public class YonghuController {
 		if(newPassword == null){
 			return R.error("新密码不能为空") ;
 		}
-		if(!oldPassword.equals(yonghu.getPassword())){
+		if(!MD5Utils.md5(oldPassword).equals(yonghu.getPassword())){
 			return R.error("原密码输入错误");
 		}
-		if(newPassword.equals(yonghu.getPassword())){
+		if(MD5Utils.md5(newPassword).equals(yonghu.getPassword())){
 			return R.error("新密码不能和原密码一致") ;
 		}
-        yonghu.setPassword(newPassword);
+        yonghu.setPassword(MD5Utils.md5(newPassword));
 		yonghuService.updateById(yonghu);
 		return R.ok();
 	}

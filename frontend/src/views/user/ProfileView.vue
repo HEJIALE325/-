@@ -326,6 +326,22 @@ import message from '../../utils/message'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 
+// MD5加密函数
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 const router = useRouter()
 const userInfo = ref({})
 const form = ref({})
@@ -427,8 +443,8 @@ const changePassword = async () => {
 
   try {
     const response = await yonghuApi.updatePassword(
-      passwordForm.value.oldPassword,
-      passwordForm.value.newPassword
+      md5(passwordForm.value.oldPassword),
+      md5(passwordForm.value.newPassword)
     )
     if (response.code === 0) {
       message.success('密码修改成功')

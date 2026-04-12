@@ -46,7 +46,7 @@ public class UsersController {
 	@PostMapping(value = "/login")
 	public R login(String username, String password, String captcha, HttpServletRequest request) {
 		UsersEntity user = usersService.selectOne(new EntityWrapper<UsersEntity>().eq("username", username));
-		if(user==null || !user.getPassword().equals(password)) {
+		if(user==null || !user.getPassword().equals(MD5Utils.md5(password))) {
 			return R.error("账号或密码不正确");
 		}
 		String token = tokenService.generateToken(user.getId(),username, "users", user.getRole());
@@ -67,6 +67,7 @@ public class UsersController {
     	if(usersService.selectOne(new EntityWrapper<UsersEntity>().eq("username", user.getUsername())) !=null) {
     		return R.error("用户已存在");
     	}
+        user.setPassword(MD5Utils.md5(user.getPassword()));
         usersService.insert(user);
         return R.ok();
     }
@@ -89,13 +90,13 @@ public class UsersController {
 		if(newPassword == null){
 			return R.error("新密码不能为空") ;
 		}
-		if(!oldPassword.equals(users.getPassword())){
+		if(!MD5Utils.md5(oldPassword).equals(users.getPassword())){
 			return R.error("原密码输入错误");
 		}
-		if(newPassword.equals(users.getPassword())){
+		if(MD5Utils.md5(newPassword).equals(users.getPassword())){
 			return R.error("新密码不能和原密码一致") ;
 		}
-		users.setPassword(newPassword);
+		users.setPassword(MD5Utils.md5(newPassword));
 		usersService.updateById(users);
 		return R.ok();
 	}
@@ -163,6 +164,7 @@ public class UsersController {
     	if(usersService.selectOne(new EntityWrapper<UsersEntity>().eq("username", user.getUsername())) !=null) {
     		return R.error("用户已存在");
     	}
+        user.setPassword(MD5Utils.md5(user.getPassword()));
         usersService.insert(user);
         return R.ok();
     }

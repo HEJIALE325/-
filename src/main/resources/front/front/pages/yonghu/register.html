@@ -311,9 +311,27 @@ overflow-y: scroll;
             }
         });
 
+        // MD5加密函数
+        function md5(string) {
+            let hash = 0;
+            if (string.length === 0) return hash;
+            for (let i = 0; i < string.length; i++) {
+                let char = string.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            let hex = hash.toString(16);
+            while (hex.length < 32) {
+                hex = '0' + hex;
+            }
+            return hex;
+        }
+
         // 注册
         form.on('submit(register)', function (data) {
             data = data.field;
+            // 对密码进行MD5加密
+            data.password = md5(data.password);
             http.requestJson(tablename + '/register', 'post', data, function (res) {
                 if(res.code==0){
                     layer.msg('注册成功', {
@@ -330,7 +348,7 @@ overflow-y: scroll;
                     });
                 }
             });
-            return false
+            return false;
         });
 
 
