@@ -95,6 +95,22 @@ import { useRouter } from 'vue-router'
 import { usersApi } from '../../utils/api'
 import message from '../../utils/message'
 
+// MD5加密函数
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 const router = useRouter()
 const form = ref({
   username: '',
@@ -117,8 +133,13 @@ const handleLogin = async (e) => {
   e.preventDefault()
   try {
     isLoading.value = true
+    // 对密码进行MD5加密
+    const loginData = {
+      ...form.value,
+      password: md5(form.value.password)
+    }
     // 调用登录接口
-    const response = await usersApi.login(form.value)
+    const response = await usersApi.login(loginData)
     if (response.code === 0) {
       // 登录成功，保存token到本地存储
       if (response.token) {

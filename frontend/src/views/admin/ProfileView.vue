@@ -120,6 +120,22 @@ import { ref, onMounted, computed } from 'vue'
 import { usersApi } from '../../utils/api'
 import message from '../../utils/message'
 
+// MD5加密函数
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 const form = ref({
   id: '',
   username: '',
@@ -194,9 +210,11 @@ const handleSubmit = async () => {
     
     // 如果密码不为空，则添加到更新数据中
     if (form.value.password) {
-      updateData.password = form.value.password
+      // 对密码进行MD5加密
+      const encryptedPassword = md5(form.value.password)
+      updateData.password = encryptedPassword
       // 添加mima字段，根据示例可能需要
-      updateData.mima = form.value.password
+      updateData.mima = encryptedPassword
     }
     
     const response = await usersApi.update(updateData)
