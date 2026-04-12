@@ -216,6 +216,15 @@ public class ChongwujiyangYuyueController {
             }
             yonghuEntity.setNewMoney(yonghuEntity.getNewMoney() - (oldChongwujiyangYuyue.getChongwujiyangYuyuePrice() * oldChongwujiyangYuyue.getChongwujiyangYuyueNum()));
             yonghuService.updateById(yonghuEntity);
+            
+            // 自动创建寄存日志
+            ChongwurizhiEntity chongwurizhiEntity = new ChongwurizhiEntity();
+            chongwurizhiEntity.setChongwujiyangYuyueId(oldChongwujiyangYuyue.getId());
+            chongwurizhiEntity.setChongwurizhiName("订单审核通过");
+            chongwurizhiEntity.setChongwurizhiContent("宠物寄养订单审核通过，已开始寄养服务。");
+            chongwurizhiEntity.setInsertTime(new Date());
+            chongwurizhiEntity.setCreateTime(new Date());
+            chongwurizhiService.insert(chongwurizhiEntity);
         }
         chongwujiyangYuyueService.updateById(chongwujiyangYuyueEntity);//审核
 
@@ -229,6 +238,18 @@ public class ChongwujiyangYuyueController {
     public R delete(@RequestBody Integer[] ids, HttpServletRequest request){
         logger.debug("delete:,,Controller:{},,ids:{}",this.getClass().getName(),ids.toString());
         List<ChongwujiyangYuyueEntity> oldChongwujiyangYuyueList =chongwujiyangYuyueService.selectBatchIds(Arrays.asList(ids));//要删除的数据
+        
+        // 为每个取消的订单创建寄存日志
+        for(ChongwujiyangYuyueEntity order : oldChongwujiyangYuyueList){
+            ChongwurizhiEntity chongwurizhiEntity = new ChongwurizhiEntity();
+            chongwurizhiEntity.setChongwujiyangYuyueId(order.getId());
+            chongwurizhiEntity.setChongwurizhiName("订单取消");
+            chongwurizhiEntity.setChongwurizhiContent("宠物寄养订单已取消。");
+            chongwurizhiEntity.setInsertTime(new Date());
+            chongwurizhiEntity.setCreateTime(new Date());
+            chongwurizhiService.insert(chongwurizhiEntity);
+        }
+        
         chongwujiyangYuyueService.deleteBatchIds(Arrays.asList(ids));
 
         return R.ok();

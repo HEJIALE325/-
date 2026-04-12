@@ -86,9 +86,6 @@
                   <button class="btn btn-sm btn-secondary" @click="viewOrderDetail(order)">
                     查看详情
                   </button>
-                  <button class="btn btn-sm btn-info" @click="viewOrderLogs(order.id)">
-                    寄存日志
-                  </button>
                   <button v-if="order.chongwujiyangYuyueYesnoTypes === 1" class="btn btn-sm btn-danger" @click="cancelOrder(order.id)">
                     取消订单
                   </button>
