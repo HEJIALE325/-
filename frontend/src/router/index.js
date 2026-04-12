@@ -91,6 +91,22 @@ const router = createRouter({
       name: 'user-forum-detail',
       component: () => import('../views/user/ForumDetailView.vue')
     },
+    // 宠物寄养相关路由
+    {
+      path: '/chongwujiyang',
+      name: 'user-chongwujiyang',
+      component: () => import('../views/user/ChongwujiyangListView.vue')
+    },
+    {
+      path: '/chongwujiyang/detail/:id',
+      name: 'user-chongwujiyang-detail',
+      component: () => import('../views/user/ChongwujiyangDetailView.vue')
+    },
+    {
+      path: '/chongwujiyang/booking/:id',
+      name: 'user-chongwujiyang-booking',
+      component: () => import('../views/user/ChongwujiyangBookingView.vue')
+    },
     // 后台管理路由 - 登录页面（独立路由）
     {
       path: '/admin/login',

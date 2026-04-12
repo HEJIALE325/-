@@ -86,6 +86,9 @@
                   <button class="btn btn-sm btn-secondary" @click="viewOrderDetail(order)">
                     查看详情
                   </button>
+                  <button v-if="order.chongwujiyangYuyueYesnoTypes === 1" class="btn btn-sm btn-danger" @click="cancelOrder(order.id)">
+                    取消订单
+                  </button>
                 </td>
               </tr>
               <tr v-if="orders.length === 0">
@@ -344,6 +347,24 @@ const handleReset = () => {
 const viewOrderDetail = (order) => {
   currentOrder.value = order
   showDetailModal.value = true
+}
+
+// 取消订单
+const cancelOrder = async (orderId) => {
+  if (confirm('确定要取消该订单吗？')) {
+    try {
+      const response = await chongwujiyangYuyueApi.delete([orderId])
+      if (response.code === 0) {
+        message.success('订单取消成功')
+        fetchOrders() // 重新获取订单列表
+      } else {
+        message.error('订单取消失败')
+      }
+    } catch (error) {
+      console.error('取消订单失败:', error)
+      message.error('取消订单失败，请稍后重试')
+    }
+  }
 }
 
 // 获取状态样式类
