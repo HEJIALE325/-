@@ -90,13 +90,14 @@ public class UsersController {
 		if(newPassword == null){
 			return R.error("新密码不能为空") ;
 		}
-		if(!MD5Utils.md5(oldPassword).equals(users.getPassword())){
+		// 前端已经进行了MD5加密,后端直接比较
+		if(!oldPassword.equals(users.getPassword())){
 			return R.error("原密码输入错误");
 		}
-		if(MD5Utils.md5(newPassword).equals(users.getPassword())){
+		if(newPassword.equals(users.getPassword())){
 			return R.error("新密码不能和原密码一致") ;
 		}
-		users.setPassword(MD5Utils.md5(newPassword));
+		users.setPassword(newPassword);
 		usersService.updateById(users);
 		return R.ok();
 	}
