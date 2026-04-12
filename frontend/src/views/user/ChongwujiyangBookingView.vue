@@ -209,9 +209,28 @@ const submitBooking = async () => {
     if (sessionResponse.code === 0 && sessionResponse.data) {
       form.value.yonghuId = sessionResponse.data.id || sessionResponse.data.yonghuId
       
+      // 转换日期格式：ISO 8601 -> yyyy-MM-dd HH:mm:ss
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
+
       const bookingData = {
-        ...form.value,
-        t: Date.now()
+        chongwujiyangId: Number(form.value.chongwujiyangId),
+        yonghuId: Number(form.value.yonghuId),
+        chongwujiyangYuyueName: form.value.chongwujiyangYuyueName,
+        chongwuTypes: Number(form.value.chongwuTypes),
+        chongwuZhongliang: Number(form.value.chongwuZhongliang),
+        chongwujiyangYuyueTime: formatDate(form.value.chongwujiyangYuyueTime),
+        chongwujiyangYuyueNum: Number(form.value.chongwujiyangYuyueNum),
+        shifouTypes: Number(form.value.shifouTypes),
+        chongwujiyangYuyuePrice: Number(form.value.chongwujiyangYuyuePrice)
       }
 
       const response = await chongwujiyangYuyueApi.add(bookingData)
