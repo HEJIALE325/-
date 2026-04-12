@@ -38,20 +38,16 @@
               <h3>寄养日期</h3>
               <div class="date-picker">
                 <div class="date-item">
-                  <label for="startDate">开始日期：</label>
-                  <input type="date" id="startDate" v-model="form.startDate" @change="calculateDays">
-                </div>
-                <div class="date-item">
-                  <label for="endDate">结束日期：</label>
-                  <input type="date" id="endDate" v-model="form.endDate" @change="calculateDays">
+                  <label for="startDate">寄养开始时间：</label>
+                  <input type="datetime-local" id="startDate" v-model="form.chongwujiyangYuyueTime">
                 </div>
                 <div class="date-item">
                   <label>寄养天数：</label>
-                  <span class="days-count">{{ form.days }} 天</span>
+                  <input type="number" id="days" v-model.number="form.chongwujiyangYuyueNum" min="1" @change="calculateTotalPrice">
                 </div>
-                <div class="date-item">
+                <div class="date-item full-width">
                   <label>预估费用：</label>
-                  <span class="total-price">¥{{ form.totalPrice }}</span>
+                  <span class="total-price">¥{{ form.chongwujiyangYuyuePrice }}</span>
                 </div>
               </div>
             </div>
@@ -61,45 +57,34 @@
               <h3>宠物信息</h3>
               <div class="form-group">
                 <label for="petName">宠物名称：</label>
-                <input type="text" id="petName" v-model="form.petName" placeholder="请输入宠物名称">
+                <input type="text" id="petName" v-model="form.chongwujiyangYuyueName" placeholder="请输入宠物名称">
               </div>
               <div class="form-group">
                 <label for="petType">宠物类型：</label>
-                <select id="petType" v-model="form.petType">
+                <select id="petType" v-model="form.chongwuTypes">
                   <option value="">请选择宠物类型</option>
-                  <option value="狗">狗</option>
-                  <option value="猫">猫</option>
-                  <option value="其他">其他</option>
+                  <option v-for="type in petTypeOptions" :key="type.codeIndex" :value="type.codeIndex">
+                    {{ type.indexName }}
+                  </option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="petBreed">宠物品种：</label>
-                <input type="text" id="petBreed" v-model="form.petBreed" placeholder="请输入宠物品种">
-              </div>
-              <div class="form-group">
-                <label for="petAge">宠物年龄：</label>
-                <input type="text" id="petAge" v-model="form.petAge" placeholder="请输入宠物年龄">
-              </div>
-              <div class="form-group">
-                <label for="petNotes">特殊说明：</label>
-                <textarea id="petNotes" v-model="form.petNotes" placeholder="如有特殊需求，请在此说明"></textarea>
+                <label for="petWeight">宠物重量(kg)：</label>
+                <input type="number" id="petWeight" v-model.number="form.chongwuZhongliang" placeholder="请输入宠物重量">
               </div>
             </div>
 
-            <!-- 联系信息 -->
-            <div class="contact-info-section">
-              <h3>联系信息</h3>
+            <!-- 接送服务 -->
+            <div class="service-option-section">
+              <h3>接送服务</h3>
               <div class="form-group">
-                <label for="contactName">联系人：</label>
-                <input type="text" id="contactName" v-model="form.contactName" placeholder="请输入联系人姓名">
-              </div>
-              <div class="form-group">
-                <label for="contactPhone">联系电话：</label>
-                <input type="tel" id="contactPhone" v-model="form.contactPhone" placeholder="请输入联系电话">
-              </div>
-              <div class="form-group">
-                <label for="contactAddress">联系地址：</label>
-                <input type="text" id="contactAddress" v-model="form.contactAddress" placeholder="请输入联系地址">
+                <label for="shifouTypes">是否接送：</label>
+                <select id="shifouTypes" v-model="form.shifouTypes">
+                  <option value="">请选择</option>
+                  <option v-for="option in shifouTypeOptions" :key="option.codeIndex" :value="option.codeIndex">
+                    {{ option.indexName }}
+                  </option>
+                </select>
               </div>
             </div>
 
@@ -124,7 +109,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { chongwujiyangApi, chongwujiyangYuyueApi, usersApi, dictionaryApi } from '../../utils/api'
+import { chongwujiyangApi, chongwujiyangYuyueApi, yonghuApi, dictionaryApi } from '../../utils/api'
 import message from '../../utils/message'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
@@ -134,43 +119,66 @@ const route = useRoute()
 const service = ref(null)
 const loading = ref(false)
 const serviceTypes = ref([])
+const petTypeOptions = ref([])
+const shifouTypeOptions = ref([])
 
-// 表单数据
+// 表单数据 - 与后端实体类保持一致
 const form = ref({
-  startDate: '',
-  endDate: '',
-  days: 0,
-  totalPrice: 0,
-  petName: '',
-  petType: '',
-  petBreed: '',
-  petAge: '',
-  petNotes: '',
-  contactName: '',
-  contactPhone: '',
-  contactAddress: ''
+  chongwujiyangId: null,
+  yonghuId: null,
+  chongwujiyangYuyueName: '',
+  chongwuTypes: null,
+  chongwuZhongliang: null,
+  chongwujiyangYuyueTime: '',
+  chongwujiyangYuyueNum: 1,
+  shifouTypes: null,
+  chongwujiyangYuyuePrice: 0
 })
 
 // 计算表单是否有效
 const isFormValid = computed(() => {
-  return form.value.startDate && 
-         form.value.endDate && 
-         form.value.days > 0 && 
-         form.value.petName && 
-         form.value.petType && 
-         form.value.contactName && 
-         form.value.contactPhone
+  return form.value.chongwujiyangYuyueName && 
+         form.value.chongwuTypes !== null && 
+         form.value.chongwuZhongliang !== null && 
+         form.value.chongwujiyangYuyueTime && 
+         form.value.chongwujiyangYuyueNum > 0 && 
+         form.value.shifouTypes !== null
 })
 
-// 加载服务类型字典
-const loadServiceTypes = async () => {
+// 加载字典数据
+const loadDictionaryData = async () => {
   try {
-    const response = await dictionaryApi.getByDicCode('chongwujiyang_types')
-    if (response.code === 0) {
-      serviceTypes.value = response.data.list || []
+    // 获取寄养服务类型
+    const serviceTypeResponse = await dictionaryApi.getPage({
+      dicCode: 'chongwujiyang_types',
+      page: 1,
+      limit: 100
+    })
+    if (serviceTypeResponse.code === 0) {
+      serviceTypes.value = serviceTypeResponse.data.list || []
+    }
+    
+    // 获取宠物类型
+    const petTypeResponse = await dictionaryApi.getPage({
+      dicCode: 'chongwu_types',
+      page: 1,
+      limit: 100
+    })
+    if (petTypeResponse.code === 0) {
+      petTypeOptions.value = petTypeResponse.data.list || []
+    }
+    
+    // 获取是否接送类型
+    const shifouTypeResponse = await dictionaryApi.getPage({
+      dicCode: 'shifou_types',
+      page: 1,
+      limit: 100
+    })
+    if (shifouTypeResponse.code === 0) {
+      shifouTypeOptions.value = shifouTypeResponse.data.list || []
     }
   } catch (error) {
-    console.error('获取服务类型失败:', error)
+    console.error('获取字典数据失败:', error)
   }
 }
 
@@ -188,6 +196,8 @@ const getServiceDetail = async () => {
     const response = await chongwujiyangApi.getDetail(serviceId)
     if (response.code === 0) {
       service.value = response.data
+      form.value.chongwujiyangId = service.value.id
+      calculateTotalPrice()
     } else {
       message.error('获取服务详情失败')
     }
@@ -199,23 +209,10 @@ const getServiceDetail = async () => {
   }
 }
 
-// 计算寄养天数和费用
-const calculateDays = () => {
-  if (form.value.startDate && form.value.endDate) {
-    const start = new Date(form.value.startDate)
-    const end = new Date(form.value.endDate)
-    const diffTime = Math.abs(end - start)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // 包含开始和结束日期
-    
-    if (diffDays > 0) {
-      form.value.days = diffDays
-      if (service.value) {
-        form.value.totalPrice = (service.value.chongwujiyangNewMoney * diffDays).toFixed(2)
-      }
-    } else {
-      form.value.days = 0
-      form.value.totalPrice = 0
-    }
+// 计算总价格
+const calculateTotalPrice = () => {
+  if (service.value && form.value.chongwujiyangYuyueNum > 0) {
+    form.value.chongwujiyangYuyuePrice = (service.value.chongwujiyangNewMoney * form.value.chongwujiyangYuyueNum).toFixed(2)
   }
 }
 
@@ -228,27 +225,13 @@ const submitBooking = async () => {
 
   try {
     // 获取用户会话信息
-    const sessionResponse = await usersApi.session()
+    const sessionResponse = await yonghuApi.session()
     if (sessionResponse.code === 0 && sessionResponse.data) {
-      const yonghuId = sessionResponse.data.yonghuId || sessionResponse.data.id
+      form.value.yonghuId = sessionResponse.data.id || sessionResponse.data.yonghuId
       
-      // 构建预约数据
+      // 构建预约数据 - 直接使用form对象，因为已经与后端结构匹配
       const bookingData = {
-        yonghuId,
-        chongwujiyangId: service.value.id,
-        chongwujiyangYuyueName: service.value.chongwujiyangName,
-        chongwujiyangYuyueTypes: service.value.chongwujiyangTypes,
-        chongwujiyangYuyueMoney: form.value.totalPrice,
-        chongwujiyangYuyueStarttime: form.value.startDate,
-        chongwujiyangYuyueEndtime: form.value.endDate,
-        chongwujiyangYuyuePetname: form.value.petName,
-        chongwujiyangYuyuePettype: form.value.petType,
-        chongwujiyangYuyuePetbreed: form.value.petBreed,
-        chongwujiyangYuyuePetage: form.value.petAge,
-        chongwujiyangYuyueBeizhu: form.value.petNotes,
-        chongwujiyangYuyueContactname: form.value.contactName,
-        chongwujiyangYuyueContactphone: form.value.contactPhone,
-        chongwujiyangYuyueContactaddress: form.value.contactAddress,
+        ...form.value,
         t: Date.now()
       }
 
@@ -259,7 +242,7 @@ const submitBooking = async () => {
         // 跳转到订单列表
         router.push('/user/pet-orders')
       } else {
-        message.error('预约失败')
+        message.error(response.msg || '预约失败')
       }
     } else {
       message.error('获取用户信息失败，请先登录')
@@ -276,9 +259,9 @@ const backToDetail = () => {
   router.push(`/chongwujiyang/detail/${route.params.id}`)
 }
 
-// 页面加载时获取服务类型和服务详情
+// 页面加载时获取字典数据和服务详情
 onMounted(() => {
-  loadServiceTypes()
+  loadDictionaryData()
   getServiceDetail()
 })
 </script>
@@ -358,7 +341,7 @@ onMounted(() => {
 .service-info-section h3,
 .date-section h3,
 .pet-info-section h3,
-.contact-info-section h3 {
+.service-option-section h3 {
   color: var(--text-1);
   font-size: var(--fs-lg);
   font-weight: 600;
@@ -435,6 +418,10 @@ onMounted(() => {
   gap: var(--spacing-xs);
 }
 
+.date-item.full-width {
+  grid-column: span 2;
+}
+
 .date-item label {
   font-weight: 500;
   color: var(--text-1);
@@ -450,12 +437,6 @@ onMounted(() => {
   color: var(--text-1);
 }
 
-.days-count {
-  font-weight: 500;
-  color: var(--text-1);
-  font-size: var(--fs-base);
-}
-
 .total-price {
   color: var(--danger);
   font-size: var(--fs-lg);
@@ -463,7 +444,7 @@ onMounted(() => {
 }
 
 .pet-info-section,
-.contact-info-section {
+.service-option-section {
   background: white;
   padding: var(--spacing-base);
   border-radius: var(--radius-base);
@@ -525,6 +506,10 @@ onMounted(() => {
   
   .date-picker {
     grid-template-columns: 1fr;
+  }
+  
+  .date-item.full-width {
+    grid-column: span 1;
   }
   
   .service-card {
