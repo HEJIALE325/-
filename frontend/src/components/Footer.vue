@@ -40,6 +40,7 @@
           <ul>
             <li><router-link to="/">首页</router-link></li>
             <li><router-link to="/products">商品分类</router-link></li>
+            <li><router-link to="/chongwujiyang">宠物寄养</router-link></li>
             <li><router-link to="/forum">宠物论坛</router-link></li>
             <li><router-link to="/news">宠物资讯</router-link></li>
             <li><router-link to="/about">关于我们</router-link></li>

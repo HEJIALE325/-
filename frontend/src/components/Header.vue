@@ -17,6 +17,7 @@
           <nav class="nav">
             <router-link to="/" class="nav-link">首页</router-link>
             <router-link to="/products" class="nav-link">商品</router-link>
+            <router-link to="/chongwujiyang" class="nav-link">宠物寄养</router-link>
             <router-link to="/forum" class="nav-link">论坛</router-link>
             <router-link to="/news" class="nav-link">资讯</router-link>
           </nav>
