@@ -137,6 +137,22 @@ import { http } from '../../utils/request'
 import message from '../../utils/message'
 import confirm from '../../utils/confirm'
 
+// MD5加密函数
+function md5(string) {
+  let hash = 0;
+  if (string.length === 0) return hash;
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  let hex = hash.toString(16);
+  while (hex.length < 32) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
 // 管理员列表
 const adminList = ref([])
 // 总数
@@ -288,7 +304,10 @@ const handleSave = async () => {
     const data = { ...editingAdmin.value }
     // 移除密码确认字段和空密码字段
     delete data.passwordConfirm
-    if (!data.password) {
+    if (data.password) {
+      // 对密码进行MD5加密
+      data.password = md5(data.password)
+    } else {
       delete data.password
     }
     
