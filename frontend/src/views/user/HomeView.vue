@@ -401,7 +401,7 @@ const fetchPets = async () => {
   try {
     loading.value = true
     error.value = null
-    const response = await petApi.getPage({ page: 1, limit: 6 })
+    const response = await petApi.getPage({ page: 1, limit: 6, status: 1 }) // 只显示上架的宠物
     if (response.code === 0) {
       pets.value = response.data.list || []
     } else {

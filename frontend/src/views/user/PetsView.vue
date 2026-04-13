@@ -218,6 +218,7 @@ const fetchPets = async () => {
       limit: 8,
       sort: 'id',
       order: 'desc',
+      status: 1, // 只显示上架的宠物
       ...searchParams.value
     }
     
