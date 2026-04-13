@@ -69,14 +69,21 @@
                   <button class="btn btn-info btn-sm" @click="handleView(order)">
                     查看详情
                   </button>
-                  <button class="btn btn-secondary btn-sm" @click="handleEdit(order)">
-                    编辑
+                  <!-- 根据订单状态显示不同的操作按钮 -->
+                  <button v-if="order.orderStatus === 1" class="btn btn-primary btn-sm" @click="updateStatus(order.id, 2)">
+                    标记为已付款
+                  </button>
+                  <button v-if="order.orderStatus === 1" class="btn btn-danger btn-sm" @click="updateStatus(order.id, 5)">
+                    取消订单
+                  </button>
+                  <button v-if="order.orderStatus === 2" class="btn btn-primary btn-sm" @click="updateStatus(order.id, 3)">
+                    发货
+                  </button>
+                  <button v-if="order.orderStatus === 3" class="btn btn-primary btn-sm" @click="updateStatus(order.id, 4)">
+                    标记为已完成
                   </button>
                   <button class="btn btn-danger btn-sm" @click="handleDelete(order.id)">
                     删除
-                  </button>
-                  <button class="btn btn-primary btn-sm" @click="handleStatus(order.id, order.orderStatus)" v-if="order.orderStatus !== 4 && order.orderStatus !== 5">
-                    更新状态
                   </button>
                 </td>
               </tr>
@@ -304,23 +311,7 @@ export default {
         }
       }
     },
-    handleStatus(id, currentStatus) {
-      let newStatus = currentStatus
-      switch (currentStatus) {
-        case 1: 
-          newStatus = 2 
-          break
-        case 2: 
-          newStatus = 3 
-          break
-        case 3: 
-          newStatus = 4 
-          break
-        default:
-          return
-      }
-      this.updateStatus(id, newStatus)
-    },
+
     async updateStatus(id, status) {
       try {
         await petOrderApi.update({ id, orderStatus: status })
