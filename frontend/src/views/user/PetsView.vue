@@ -127,9 +127,9 @@ const searchParams = ref({
 // 获取宠物分类
 const fetchCategories = async () => {
   try {
-    const response = await petCategoryApi.list()
+    const response = await petCategoryApi.getList()
     if (response.code === 0) {
-      categories.value = response.data
+      categories.value = response.data.list || []
     } else {
       message.error('获取宠物分类失败')
     }
@@ -156,10 +156,13 @@ const fetchPets = async () => {
       params.categoryId = selectedCategory.value
     }
     
-    const response = await petApi.page(params)
+    const response = await petApi.getPage(params)
     
     if (response.code === 0) {
-      pets.value = response.data.list
+      pets.value = (response.data.list || []).map(pet => ({
+        ...pet,
+        imageUrl: pet.imageUrl ? `http://localhost:8080/wangshangchongwudian/${pet.imageUrl}` : 'https://via.placeholder.com/300x300'
+      }))
       total.value = response.data.total
       totalPage.value = Math.ceil(total.value / 8)
     } else {
@@ -206,12 +209,12 @@ const handleReset = () => {
 
 // 查看宠物详情
 const viewPetDetail = (petId) => {
-  router.push(`/user/pet/${petId}`)
+  router.push(`/pet/${petId}`)
 }
 
 // 立即购买
 const buyPet = (petId) => {
-  router.push(`/user/order-confirm?type=pet&id=${petId}`)
+  router.push(`/order-confirm?type=pet&id=${petId}`)
 }
 
 // 页面加载时的初始化
