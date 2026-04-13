@@ -2,7 +2,8 @@
 SQLyog Ultimate v11.3 (64 bit)
 MySQL - 5.7.32-log : Database - wangshangchongwudian
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 
@@ -368,3 +369,72 @@ insert  into `yonghu`(`id`,`username`,`password`,`yonghu_name`,`yonghu_phone`,`y
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- 宠物分类表
+CREATE TABLE IF NOT EXISTS `pet_category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(100) NOT NULL COMMENT '分类名称',
+  `parent_id` int(11) DEFAULT NULL COMMENT '父分类ID，0表示顶级分类',
+  `level` int(11) NOT NULL DEFAULT 1 COMMENT '分类层级',
+  `sort` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `parent_id` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物分类表';
+ 
+-- 宠物表
+CREATE TABLE IF NOT EXISTS `pets` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(100) NOT NULL COMMENT '宠物名称',
+  `category_id` int(11) NOT NULL COMMENT '分类ID',
+  `gender` varchar(10) NOT NULL COMMENT '性别',
+  `age` varchar(20) NOT NULL COMMENT '年龄',
+  `breed` varchar(100) NOT NULL COMMENT '品种',
+  `price` decimal(10,2) NOT NULL COMMENT '价格',
+  `description` text COMMENT '描述',
+  `image_url` varchar(255) COMMENT '图片URL',
+  `status` int(11) NOT NULL DEFAULT 1 COMMENT '状态：1=上架，0=下架',
+  `click_num` int(11) NOT NULL DEFAULT 0 COMMENT '点击数',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `category_id` (`category_id`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物表';
+ 
+-- 宠物订单表
+CREATE TABLE IF NOT EXISTS `pet_order` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `order_uuid` varchar(100) NOT NULL COMMENT '订单号',
+  `user_id` int(11) NOT NULL COMMENT '用户ID',
+  `pet_id` int(11) NOT NULL COMMENT '宠物ID',
+  `address_id` int(11) NOT NULL COMMENT '收货地址ID',
+  `price` decimal(10,2) NOT NULL COMMENT '订单价格',
+  `order_type` int(11) NOT NULL DEFAULT 1 COMMENT '订单类型',
+  `payment_type` int(11) DEFAULT NULL COMMENT '支付类型',
+  `order_status` int(11) NOT NULL DEFAULT 1 COMMENT '订单状态：1=待付款，2=待发货，3=已发货，4=已完成，5=已取消',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `pet_id` (`pet_id`),
+  KEY `order_status` (`order_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物订单表';
+ 
+-- 插入示例数据
+-- 宠物分类
+INSERT INTO `pet_category` (`name`, `parent_id`, `level`, `sort`) VALUES
+('狗', 0, 1, 1),
+('猫', 0, 1, 2),
+('其他宠物', 0, 1, 3),
+('拉布拉多', 1, 2, 1),
+('金毛', 1, 2, 2),
+('泰迪', 1, 2, 3),
+('英短', 2, 2, 1),
+('美短', 2, 2, 2),
+('布偶', 2, 2, 3);
+ 
+-- 宠物
+INSERT INTO `pets` (`name`, `category_id`, `gender`, `age`, `breed`, `price`, `description`, `image_url`, `status`) VALUES
+('小黑', 4, '公', '2个月', '拉布拉多', 1500.00, '活泼可爱，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20black%20labrador%20puppy&image_size=square_hd', 1),
+('小白', 5, '母', '3个月', '金毛', 2000.00, '温顺乖巧，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20golden%20retriever%20puppy&image_size=square_hd', 1),
+('咪咪', 7, '母', '1个月', '英短', 1800.00, '粘人可爱，已驱虫', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20british%20shorthair%20kitten&image_size=square_hd', 1);
