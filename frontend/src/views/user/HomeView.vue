@@ -20,10 +20,10 @@
               <p>{{ banner.subtitle }}</p>
               <div class="banner-actions">
                 <router-link to="/products" class="btn btn-primary">
-                  立即选购 🐾
+                  宠物用品 🛒
                 </router-link>
                 <router-link to="/pets" class="btn btn-secondary">
-                  领养宠物
+                  可爱宠物 🐶
                 </router-link>
               </div>
             </div>
@@ -357,20 +357,20 @@ const fetchBanners = async () => {
       {
         id: 1,
         title: '欢迎来到宠物电商平台',
-        subtitle: '用心呵护每一位毛孩子，为宠物提供优质的商品和服务',
+        subtitle: '用心呵护每一位毛孩子，为您提供优质的宠物用品和可爱宠物',
         image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20pets%20in%20pet%20shop%20banner%20with%20colorful%20background&image_size=landscape_16_9'
       },
       {
         id: 2,
-        title: '新品上市',
-        subtitle: '全新宠物用品系列，给您的爱宠最好的呵护',
+        title: '宠物用品专区',
+        subtitle: '优质宠物用品，为您的爱宠提供全方位呵护',
         image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=new%20pet%20products%20display%20in%20modern%20store&image_size=landscape_16_9'
       },
       {
         id: 3,
-        title: '限时促销',
-        subtitle: '全场宠物用品低至5折，错过再等一年',
-        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=pet%20supplies%20sale%20promotion%20banner%20with%20discount&image_size=landscape_16_9'
+        title: '可爱宠物等你来',
+        subtitle: '精选健康可爱的宠物，为您的家庭增添新成员',
+        image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20puppies%20and%20kittens%20for%20adoption%20banner&image_size=landscape_16_9'
       }
     ]
   }

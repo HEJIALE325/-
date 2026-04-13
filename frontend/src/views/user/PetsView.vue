@@ -8,43 +8,59 @@
           <p>选择您心仪的宠物</p>
         </div>
         
-        <!-- 分类筛选 -->
-        <div class="category-filter">
-          <h3>宠物分类</h3>
-          <div class="category-buttons">
-            <button 
-              v-for="category in categories" 
-              :key="category.id"
-              :class="['category-btn', { active: selectedCategory === category.id }]"
-              @click="selectCategory(category.id)"
-            >
-              {{ category.name }}
-            </button>
-          </div>
-        </div>
-        
-        <!-- 搜索表单 -->
-        <div class="search-section">
-          <form @submit.prevent="handleSearch">
-            <div class="form-row">
-              <div class="form-group">
-                <input 
-                  type="text" 
-                  v-model="searchParams.name"
-                  placeholder="请输入宠物名称进行搜索"
-                  class="search-input"
-                >
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                  搜索
-                </button>
-                <button type="button" class="btn btn-secondary" @click="handleReset">
-                  重置
-                </button>
+        <!-- 筛选 -->
+        <div class="filter-section" @click="handleClickOutside">
+          <div class="filter-left">
+            <div class="category-tree-container">
+              <label>分类：</label>
+              <div class="tree-select-container">
+                <div class="tree-select-input" @click.stop="toggleCategoryTree">
+                  <span v-if="selectedCategory">{{ getCategoryName(selectedCategory) }}</span>
+                  <span v-else class="placeholder">请选择分类</span>
+                  <span class="tree-select-arrow">{{ showCategoryTree ? '▼' : '▶' }}</span>
+                </div>
+                <div v-if="showCategoryTree" class="tree-select-dropdown">
+                  <div class="tree-select-tree">
+                    <div 
+                      class="tree-node"
+                      @click="selectCategory('')"
+                      :class="{ active: selectedCategory === '' }"
+                    >
+                      <div class="tree-node-content">全部分类</div>
+                    </div>
+                    <div v-for="category in categoryTree" :key="category.id" class="tree-node">
+                      <div 
+                        class="tree-node-content"
+                        @click="selectCategory(category.id)"
+                        :class="{ active: selectedCategory === category.id }"
+                      >
+                        {{ category.name }}
+                      </div>
+                      <div v-if="category.children && category.children.length > 0" class="tree-node-children">
+                        <div 
+                          v-for="child in category.children" 
+                          :key="child.id" 
+                          class="tree-node child-node"
+                          @click="selectCategory(child.id)"
+                          :class="{ active: selectedCategory === child.id }"
+                        >
+                          <div class="tree-node-content">{{ child.name }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </form>
+            <div class="name-filter">
+              <label>名称：</label>
+              <input type="text" v-model="searchParams.name" placeholder="宠物名称">
+            </div>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-primary" @click="handleSearch">查询</button>
+            <button class="btn btn-secondary" @click="handleReset">重置</button>
+          </div>
         </div>
         
         <!-- 宠物列表 -->
@@ -116,7 +132,9 @@ const total = ref(0)
 const totalPage = ref(1)
 const pets = ref([])
 const categories = ref([])
+const categoryTree = ref([])
 const selectedCategory = ref('')
+const showCategoryTree = ref(false)
 const loading = ref(false)
 
 // 搜索参数
@@ -129,13 +147,64 @@ const fetchCategories = async () => {
   try {
     const response = await petCategoryApi.getList()
     if (response.code === 0) {
-      categories.value = response.data.list || []
+      const allCategories = response.data.list || []
+      // 构建分类树
+      categoryTree.value = buildCategoryTree(allCategories)
     } else {
       message.error('获取宠物分类失败')
     }
   } catch (error) {
     console.error('获取宠物分类失败:', error)
     message.error('获取宠物分类失败，请稍后重试')
+  }
+}
+
+// 构建分类树
+const buildCategoryTree = (categories) => {
+  const categoryMap = {}
+  const tree = []
+  
+  // 首先创建所有分类的映射
+  categories.forEach(category => {
+    categoryMap[category.id] = {
+      ...category,
+      children: []
+    }
+  })
+  
+  // 构建树结构
+  categories.forEach(category => {
+    if (category.parentId === 0) {
+      // 顶级分类
+      tree.push(categoryMap[category.id])
+    } else {
+      // 子分类
+      if (categoryMap[category.parentId]) {
+        categoryMap[category.parentId].children.push(categoryMap[category.id])
+      }
+    }
+  })
+  
+  return tree
+}
+
+// 选择分类
+const selectCategory = (categoryId) => {
+  selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId
+  showCategoryTree.value = false
+  currentPage.value = 1
+  fetchPets()
+}
+
+// 切换分类树显示
+const toggleCategoryTree = () => {
+  showCategoryTree.value = !showCategoryTree.value
+}
+
+// 点击外部关闭分类树
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.category-tree-container')) {
+    showCategoryTree.value = false
   }
 }
 
@@ -184,12 +253,7 @@ const handlePageChange = (newPage) => {
   }
 }
 
-// 选择分类
-const selectCategory = (categoryId) => {
-  selectedCategory.value = selectedCategory.value === categoryId ? '' : categoryId
-  currentPage.value = 1
-  fetchPets()
-}
+
 
 // 搜索
 const handleSearch = () => {
@@ -205,6 +269,24 @@ const handleReset = () => {
   selectedCategory.value = ''
   currentPage.value = 1
   fetchPets()
+}
+
+// 获取分类名称
+const getCategoryName = (categoryId) => {
+  if (!categoryId) return '全部分类'
+  
+  const findCategory = (categories, id) => {
+    for (const category of categories) {
+      if (category.id === id) return category.name
+      if (category.children) {
+        const found = findCategory(category.children, id)
+        if (found) return found
+      }
+    }
+    return '未知分类'
+  }
+  
+  return findCategory(categoryTree.value, categoryId)
 }
 
 // 查看宠物详情
@@ -252,93 +334,157 @@ onMounted(() => {
   margin: 0;
 }
 
-/* 分类筛选 */
-.category-filter {
-  margin-bottom: var(--spacing-xl);
-  background-color: white;
-  padding: 20px;
-  border-radius: var(--radius-base);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-}
-
-.category-filter h3 {
-  margin: 0 0 var(--spacing-lg) 0;
-  color: var(--text-1);
-  font-size: var(--fs-lg);
-  font-weight: 600;
-}
-
-.category-buttons {
+/* 筛选区域样式 */
+.filter-section {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.category-btn {
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  background-color: white;
-  color: var(--text-1);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.category-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.category-btn.active {
-  background-color: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-/* 搜索区域样式 */
-.search-section {
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-xl);
-  background-color: white;
-  padding: 20px;
+  padding: var(--spacing-base);
+  background: var(--card);
   border-radius: var(--radius-base);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.form-row {
+.filter-left {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-right {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
-.form-group {
-  flex: 1;
-  min-width: 200px;
+.filter-right .btn {
+  font-size: var(--fs-sm);
+  padding: var(--spacing-xs) var(--spacing-base);
 }
 
-.search-input {
-  width: 100%;
-  padding: 12px 16px;
+.category-tree-container, .name-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.category-tree-container label, .name-filter label {
+  font-weight: 500;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+
+.name-filter input {
+  width: 150px;
+  padding: var(--spacing-xs) var(--spacing-base);
   border: 1px solid var(--border);
   border-radius: var(--radius-base);
-  font-size: 14px;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  font-size: var(--fs-sm);
   background-color: white;
+  color: var(--text-1);
+  font-family: inherit;
+  transition: all 0.3s ease;
 }
 
-.search-input:focus {
+.name-filter input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
 }
 
-.form-actions {
+/* 树选择器样式 */
+.tree-select-container {
+  position: relative;
+  min-width: 150px;
+}
+
+.tree-select-input {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  font-size: var(--fs-sm);
+  background-color: white;
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tree-select-input:hover {
+  border-color: var(--primary);
+}
+
+.tree-select-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.tree-select-input .placeholder {
+  color: var(--text-3);
+}
+
+.tree-select-arrow {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  transition: transform 0.3s ease;
+}
+
+.tree-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background-color: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tree-select-tree {
+  padding: var(--spacing-xs);
+}
+
+.tree-node {
+  margin-bottom: 4px;
+}
+
+.tree-node-content {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: var(--fs-sm);
+}
+
+.tree-node-content:hover {
+  background-color: var(--hover-bg);
+}
+
+.tree-node.active .tree-node-content {
+  background-color: var(--primary);
+  color: white;
+}
+
+.tree-node-children {
+  margin-left: 20px;
+  margin-top: 4px;
+}
+
+.tree-node.child-node .tree-node-content {
+  font-size: var(--fs-xs);
+}
+
+.category-tree-container {
+  position: relative;
 }
 
 /* 按钮样式 */
@@ -500,17 +646,20 @@ onMounted(() => {
     padding: var(--spacing-xl) 0;
   }
   
-  .form-row {
+  .filter-section {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: var(--spacing-base);
   }
   
-  .form-group {
-    max-width: none;
+  .filter-left {
+    flex-wrap: wrap;
+    gap: var(--spacing-base);
   }
   
-  .form-actions {
-    justify-content: center;
+  .filter-right {
+    width: 100%;
+    justify-content: flex-start;
   }
   
   .pets-grid {

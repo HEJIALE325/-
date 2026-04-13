@@ -12,7 +12,7 @@
         <div class="pet-detail-body">
           <div class="pet-image-section">
             <div class="pet-image">
-              <img :src="pet.imageUrl" :alt="pet.name">
+              <img :src="pet.imageUrl ? 'http://localhost:8080/wangshangchongwudian/' + pet.imageUrl : 'https://via.placeholder.com/400x400'" :alt="pet.name">
             </div>
           </div>
           
@@ -94,22 +94,22 @@ const fetchPetDetail = async () => {
     
     if (!petId) {
       message.error('宠物ID不存在')
-      router.push('/user/pets')
+      router.push('/pets')
       return
     }
     
-    const response = await petApi.info(petId)
+    const response = await petApi.getInfo(petId)
     
     if (response.code === 0) {
       pet.value = response.data
     } else {
       message.error('获取宠物详情失败')
-      router.push('/user/pets')
+      router.push('/pets')
     }
   } catch (error) {
     console.error('获取宠物详情失败:', error)
     message.error('获取宠物详情失败，请稍后重试')
-    router.push('/user/pets')
+    router.push('/pets')
   } finally {
     loading.value = false
   }

@@ -153,6 +153,20 @@
             </div>
             <div class="form-row">
               <div class="form-group">
+                <label for="gender">性别</label>
+                <select id="gender" v-model="formData.gender">
+                  <option value="">请选择性别</option>
+                  <option value="公">公</option>
+                  <option value="母">母</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="age">年龄</label>
+                <input type="text" id="age" v-model="formData.age" placeholder="如：1个月">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
                 <label for="description">描述</label>
                 <textarea id="description" v-model="formData.description" rows="4"></textarea>
               </div>
@@ -208,7 +222,10 @@ export default {
         price: 0,
         description: '',
         imageUrl: '',
-        status: 1
+        status: 1,
+        gender: '',
+        breed: '',
+        age: ''
       }
     }
   },
