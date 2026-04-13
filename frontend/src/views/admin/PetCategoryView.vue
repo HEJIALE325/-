@@ -1,46 +1,73 @@
 <template>
   <div class="admin-pet-category">
+    <h2>宠物分类管理</h2>
     <div class="card">
       <div class="card-body">
-        <h2>宠物分类管理</h2>
-        <!-- 操作栏 -->
-        <div class="action-section">
-          <button class="btn btn-primary" @click="handleAdd">
-            新增分类
-          </button>
+        <div class="category-types">
+          <h3>宠物分类</h3>
+          <div class="type-buttons">
+            <button
+              class="btn"
+              :class="{ 'btn-primary': selectedParentId === 0, 'btn-secondary': selectedParentId !== 0 }"
+              @click="selectParent(0)"
+            >
+              全部
+            </button>
+            <button
+              v-for="parent in parentCategories"
+              :key="parent.id"
+              class="btn"
+              :class="{ 'btn-primary': selectedParentId === parent.id, 'btn-secondary': selectedParentId !== parent.id }"
+              @click="selectParent(parent.id)"
+            >
+              {{ parent.name }}
+            </button>
+          </div>
         </div>
-        
-        <div class="table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>分类ID</th>
-                <th>分类名称</th>
-                <th>父分类</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="category in categories" :key="category.id">
-                <td>{{ category.id }}</td>
-                <td>{{ category.name }}</td>
-                <td>{{ category.parentName || '顶级分类' }}</td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" @click="handleEdit(category)">
-                    编辑
-                  </button>
-                  <button class="btn btn-danger btn-sm" @click="handleDelete(category.id)">
-                    删除
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div class="category-items">
+          <div class="action-section">
+            <button class="btn btn-primary" @click="handleAdd">
+              {{ selectedParentId === 0 ? '新增顶级分类' : '新增子分类' }}
+            </button>
+          </div>
+
+          <div class="table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>分类ID</th>
+                  <th>分类名称</th>
+                  <th>排序</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="category in displayCategories" :key="category.id">
+                  <td>{{ category.id }}</td>
+                  <td>{{ category.name }}</td>
+                  <td>{{ category.sort }}</td>
+                  <td>{{ formatDate(category.createTime) }}</td>
+                  <td>
+                    <button class="btn btn-secondary btn-sm" @click="handleEdit(category)">
+                      编辑
+                    </button>
+                    <button class="btn btn-danger btn-sm" @click="handleDelete(category.id)">
+                      删除
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="displayCategories.length === 0">
+                  <td colspan="5" class="empty-text">暂无数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-    
-    <!-- 新增/编辑对话框 -->
+
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal">
         <div class="modal-header">
@@ -60,8 +87,8 @@
                 <label for="parentId">父分类</label>
                 <select id="parentId" v-model="formData.parentId">
                   <option value="0">顶级分类</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id" v-if="isEdit ? category.id !== formData.id : true">
-                    {{ category.name }}
+                  <option v-for="parent in parentCategories" :key="parent.id" :value="parent.id" v-if="isEdit ? parent.id !== formData.id : true">
+                    {{ parent.name }}
                   </option>
                 </select>
               </div>
@@ -89,6 +116,7 @@ export default {
   data() {
     return {
       categories: [],
+      selectedParentId: 0,
       showModal: false,
       isEdit: false,
       formData: {
@@ -99,6 +127,17 @@ export default {
       }
     }
   },
+  computed: {
+    parentCategories() {
+      return this.categories.filter(c => c.parentId === 0)
+    },
+    displayCategories() {
+      if (this.selectedParentId === 0) {
+        return this.categories.filter(c => c.parentId === 0)
+      }
+      return this.categories.filter(c => c.parentId === this.selectedParentId)
+    }
+  },
   mounted() {
     this.fetchCategories()
   },
@@ -106,17 +145,25 @@ export default {
     async fetchCategories() {
       try {
         const response = await petCategoryApi.getList()
-        this.categories = response.data.data
+        this.categories = response.data.list
       } catch (error) {
         console.error('获取分类列表失败:', error)
       }
+    },
+    selectParent(parentId) {
+      this.selectedParentId = parentId
+    },
+    formatDate(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleString()
     },
     handleAdd() {
       this.isEdit = false
       this.formData = {
         id: null,
         name: '',
-        parentId: 0,
+        parentId: this.selectedParentId === 0 ? 0 : this.selectedParentId,
         sort: 0
       }
       this.showModal = true
@@ -158,7 +205,65 @@ export default {
   padding: 0;
 }
 
-/* 主卡片容器 */
+h2 {
+  margin-bottom: 24px;
+  color: var(--text-1);
+  font-size: 20px;
+}
+
+.category-types {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.category-types h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-1);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.type-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.type-buttons .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-base);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background-color: white;
+  color: var(--text-1);
+}
+
+.type-buttons .btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: rgba(66, 184, 131, 0.05);
+}
+
+.type-buttons .btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.type-buttons .btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66, 184, 131, 0.3);
+}
+
+.category-items {
+  margin-top: 24px;
+}
+
 .card {
   background-color: var(--card);
   border-radius: var(--radius-base);
@@ -170,7 +275,6 @@ export default {
   padding: 24px;
 }
 
-/* 操作栏样式 */
 .action-section {
   margin-bottom: 24px;
   display: flex;
@@ -178,7 +282,6 @@ export default {
   gap: 12px;
 }
 
-/* 表格容器 */
 .table-container {
   overflow-x: auto;
   margin-bottom: 24px;
@@ -220,7 +323,12 @@ export default {
   transition: background-color 0.2s ease;
 }
 
-/* 按钮样式增强 */
+.empty-text {
+  text-align: center;
+  color: var(--text-3);
+  padding: 40px 20px !important;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -275,7 +383,6 @@ export default {
   margin-right: 8px;
 }
 
-/* 弹窗样式 */
 .modal-overlay {
   position: fixed;
   top: 0;

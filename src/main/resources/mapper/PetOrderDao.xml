@@ -3,9 +3,44 @@
 
 <mapper namespace="com.dao.PetOrderDao">
 
-    <select id="selectListView" resultType="com.entity.PetOrderEntity">
+    <select id="selectListView" parameterType="map" resultType="com.entity.PetOrderEntity">
         SELECT  o.* FROM pet_order  o
-        <where> 1=1 ${ew.sqlSegment}</where>
+        <where> 1=1
+            <if test="params.ids != null">
+                and o.id in
+                <foreach item="item" index="index" collection="params.ids" open="(" separator="," close=")">
+                #{item}
+                </foreach>
+            </if>
+            <if test=" params.orderUuid != '' and params.orderUuid != null and params.orderUuid != 'null' ">
+                and o.order_uuid like CONCAT('%',#{params.orderUuid},'%')
+            </if>
+            <if test="params.userId != null and params.userId != ''">
+                and o.user_id = #{params.userId}
+            </if>
+            <if test="params.petId != null and params.petId != ''">
+                and o.pet_id = #{params.petId}
+            </if>
+            <if test="params.addressId != null and params.addressId != ''">
+                and o.address_id = #{params.addressId}
+            </if>
+            <if test="params.orderType != null and params.orderType != ''">
+                and o.order_type = #{params.orderType}
+            </if>
+            <if test="params.paymentType != null and params.paymentType != ''">
+                and o.payment_type = #{params.paymentType}
+            </if>
+            <if test="params.orderStatus != null and params.orderStatus != ''">
+                and o.order_status = #{params.orderStatus}
+            </if>
+            <if test="params.priceStart != null">
+                <![CDATA[  and o.price >= #{params.priceStart}   ]]>
+            </if>
+            <if test="params.priceEnd != null">
+                <![CDATA[  and o.price <= #{params.priceEnd}   ]]>
+            </if>
+        </where>
+        order by o.${params.sort} ${params.order}
     </select>
 
 </mapper>

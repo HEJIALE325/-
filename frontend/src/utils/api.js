@@ -427,73 +427,73 @@ export const yonghuApi = {
 // 宠物分类相关API服务
 export const petCategoryApi = {
   // 后端列表
-  getPage: params => http.get('/api/petCategory/page', params),
+  getPage: params => http.get('/petCategory/page', params),
   // 后端详情
-  getInfo: id => http.get(`/api/petCategory/info/${id}`),
+  getInfo: id => http.get(`/petCategory/info/${id}`),
   // 后端保存
-  save: data => http.post('/api/petCategory/save', data),
+  save: data => http.post('/petCategory/save', data),
   // 后端修改
-  update: data => http.post('/api/petCategory/update', data),
+  update: data => http.post('/petCategory/update', data),
   // 删除
-  delete: ids => http.post('/api/petCategory/delete', ids),
+  delete: ids => http.post('/petCategory/delete', ids),
   // 批量上传
-  batchInsert: fileName => http.get('/api/petCategory/batchInsert', { fileName }),
+  batchInsert: fileName => http.get('/petCategory/batchInsert', { fileName }),
   // 前端列表
-  getList: params => http.get('/api/petCategory/list', params),
+  getList: params => http.get('/petCategory/list', params),
   // 前端详情
-  getDetail: id => http.get(`/api/petCategory/detail/${id}`),
+  getDetail: id => http.get(`/petCategory/detail/${id}`),
   // 前端保存
-  add: data => http.post('/api/petCategory/add', data),
+  add: data => http.post('/petCategory/add', data),
   // 获取顶级分类
-  getTopLevel: () => http.get('/api/petCategory/topLevel')
+  getTopLevel: () => http.get('/petCategory/topLevel')
 }
 
 // 宠物相关API服务
 export const petApi = {
   // 后端列表
-  getPage: params => http.get('/api/pet/page', params),
+  getPage: params => http.get('/pet/page', params),
   // 后端详情
-  getInfo: id => http.get(`/api/pet/info/${id}`),
+  getInfo: id => http.get(`/pet/info/${id}`),
   // 后端保存
-  save: data => http.post('/api/pet/save', data),
+  save: data => http.post('/pet/save', data),
   // 后端修改
-  update: data => http.post('/api/pet/update', data),
+  update: data => http.post('/pet/update', data),
   // 删除
-  delete: ids => http.post('/api/pet/delete', ids),
+  delete: ids => http.post('/pet/delete', ids),
   // 批量上传
-  batchInsert: fileName => http.get('/api/pet/batchInsert', { fileName }),
+  batchInsert: fileName => http.get('/pet/batchInsert', { fileName }),
   // 前端列表
-  getList: params => http.get('/api/pet/list', params),
+  getList: params => http.get('/pet/list', params),
   // 前端详情
-  getDetail: id => http.get(`/api/pet/detail/${id}`),
+  getDetail: id => http.get(`/pet/detail/${id}`),
   // 前端保存
-  add: data => http.post('/api/pet/add', data)
+  add: data => http.post('/pet/add', data)
 }
 
 // 宠物订单相关API服务
 export const petOrderApi = {
   // 后端列表
-  getPage: params => http.get('/api/petOrder/page', params),
+  getPage: params => http.get('/petOrder/page', params),
   // 后端详情
-  getInfo: id => http.get(`/api/petOrder/info/${id}`),
+  getInfo: id => http.get(`/petOrder/info/${id}`),
   // 后端保存
-  save: data => http.post('/api/petOrder/save', data),
+  save: data => http.post('/petOrder/save', data),
   // 后端修改
-  update: data => http.post('/api/petOrder/update', data),
+  update: data => http.post('/petOrder/update', data),
   // 删除
-  delete: ids => http.post('/api/petOrder/delete', ids),
+  delete: ids => http.post('/petOrder/delete', ids),
   // 批量上传
-  batchInsert: fileName => http.get('/api/petOrder/batchInsert', { fileName }),
+  batchInsert: fileName => http.get('/petOrder/batchInsert', { fileName }),
   // 前端列表
-  getList: params => http.get('/api/petOrder/list', params),
+  getList: params => http.get('/petOrder/list', params),
   // 前端详情
-  getDetail: id => http.get(`/api/petOrder/detail/${id}`),
+  getDetail: id => http.get(`/petOrder/detail/${id}`),
   // 前端保存
-  add: data => http.post('/api/petOrder/add', data),
+  add: data => http.post('/petOrder/add', data),
   // 获取用户宠物购买订单列表
-  getUserOrders: (yonghuId, params = {}) => http.get('/api/petOrder/list', { ...params, yonghuId, t: Date.now() }),
+  getUserOrders: (yonghuId, params = {}) => http.get('/petOrder/list', { ...params, yonghuId, t: Date.now() }),
   // 更新订单状态
-  updateStatus: (orderId, status) => http.post('/api/petOrder/update', { id: orderId, status })
+  updateStatus: (orderId, status) => http.post('/petOrder/update', { id: orderId, status })
 }
 
 // 导出所有API服务

@@ -73,12 +73,29 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="categoryId">分类</label>
-                <select id="categoryId" v-model="formData.categoryId" required>
-                  <option value="">请选择分类</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                  </option>
-                </select>
+                <div class="tree-select-container">
+                  <div class="tree-select-input" @click="showCategoryTree = !showCategoryTree">
+                    <span v-if="formData.categoryId">{{ getCategoryName(formData.categoryId) }}</span>
+                    <span v-else class="placeholder">请选择分类</span>
+                    <span class="tree-select-arrow">{{ showCategoryTree ? '▼' : '▶' }}</span>
+                  </div>
+                  <div v-if="showCategoryTree" class="tree-select-dropdown">
+                    <div class="tree-select-tree">
+                      <div v-for="category in categoryTree" :key="category.id" class="tree-node">
+                        <div class="tree-node-content" @click="selectCategory(category.id, category.name)">
+                          {{ category.name }}
+                        </div>
+                        <div v-if="category.children && category.children.length > 0" class="tree-node-children">
+                          <div v-for="child in category.children" :key="child.id" class="tree-node child-node">
+                            <div class="tree-node-content" @click="selectCategory(child.id, child.name)">
+                              {{ child.name }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="form-group">
                 <label for="status">状态</label>
@@ -120,8 +137,10 @@ export default {
     return {
       pets: [],
       categories: [],
+      categoryTree: [],
       showModal: false,
       isEdit: false,
+      showCategoryTree: false,
       formData: {
         id: null,
         name: '',
@@ -140,7 +159,7 @@ export default {
     async fetchPets() {
       try {
         const response = await petApi.getList()
-        this.pets = response.data.data
+        this.pets = response.data.list
       } catch (error) {
         console.error('获取宠物列表失败:', error)
       }
@@ -148,10 +167,31 @@ export default {
     async fetchCategories() {
       try {
         const response = await petCategoryApi.getList()
-        this.categories = response.data.data
+        this.categories = response.data.list
+        this.categoryTree = this.buildCategoryTree(this.categories)
       } catch (error) {
         console.error('获取分类列表失败:', error)
       }
+    },
+    buildCategoryTree(categories) {
+      const categoryMap = {}
+      const tree = []
+      
+      categories.forEach(category => {
+        categoryMap[category.id] = { ...category, children: [] }
+      })
+      
+      categories.forEach(category => {
+        if (category.parentId === 0) {
+          tree.push(categoryMap[category.id])
+        } else {
+          if (categoryMap[category.parentId]) {
+            categoryMap[category.parentId].children.push(categoryMap[category.id])
+          }
+        }
+      })
+      
+      return tree
     },
     handleAdd() {
       this.isEdit = false
@@ -200,6 +240,26 @@ export default {
       } catch (error) {
         console.error('更新状态失败:', error)
       }
+    },
+    getCategoryName(categoryId) {
+      const findCategory = (categories, id) => {
+        for (const category of categories) {
+          if (category.id === id) return category.name
+          if (category.children) {
+            const found = findCategory(category.children, id)
+            if (found) return found
+          }
+        }
+        return ''
+      }
+      return findCategory(this.categoryTree, categoryId)
+    },
+    selectCategory(categoryId, categoryName) {
+      this.formData.categoryId = categoryId
+      this.showCategoryTree = false
+    },
+    closeCategoryTree() {
+      this.showCategoryTree = false
     }
   }
 }
@@ -501,5 +561,79 @@ export default {
 .status-inactive {
   background-color: rgba(144, 164, 174, 0.1);
   color: var(--text-3);
+}
+
+/* 树选择器样式 */
+.tree-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.tree-select-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tree-select-input:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.tree-select-input .placeholder {
+  color: var(--text-3);
+}
+
+.tree-select-arrow {
+  font-size: 12px;
+  color: var(--text-3);
+  transition: transform 0.3s ease;
+}
+
+.tree-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  background-color: white;
+  box-shadow: var(--shadow-base);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tree-select-tree {
+  padding: 8px 0;
+}
+
+.tree-node {
+  padding: 0;
+}
+
+.tree-node-content {
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tree-node-content:hover {
+  background-color: var(--hover-bg);
+}
+
+.child-node {
+  padding-left: 24px;
+}
+
+.tree-node-children {
+  margin-left: 16px;
 }
 </style>
