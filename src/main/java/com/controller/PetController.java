@@ -78,7 +78,11 @@ public class PetController {
         PetEntity pet = petService.selectById(id);
         if(pet !=null){
             //点击数量加1
-            pet.setClickNum(pet.getClickNum()+1);
+            if(pet.getClickNum() == null) {
+                pet.setClickNum(1);
+            } else {
+                pet.setClickNum(pet.getClickNum()+1);
+            }
             petService.updateById(pet);
             return R.ok().put("data", pet);
         }else {
@@ -232,7 +236,11 @@ public class PetController {
             if(pet !=null){
 
                 //点击数量加1
-                pet.setClickNum(pet.getClickNum()+1);
+                if(pet.getClickNum() == null) {
+                    pet.setClickNum(1);
+                } else {
+                    pet.setClickNum(pet.getClickNum()+1);
+                }
                 petService.updateById(pet);
 
                 return R.ok().put("data", pet);
