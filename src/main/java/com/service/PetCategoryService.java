@@ -1,9 +1,11 @@
 package com.service;
 
-import com.entity.PetCategoryEntity;
-import com.entity.vo.PetCategoryVO;
 import com.baomidou.mybatisplus.service.IService;
-
+import com.utils.PageUtils;
+import com.entity.PetCategoryEntity;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.lang.Nullable;
 import java.util.List;
 
 /**
@@ -15,42 +17,9 @@ import java.util.List;
 public interface PetCategoryService extends IService<PetCategoryEntity> {
 
     /**
-     * 查询所有分类，包括父分类名称
-     * @return
-     */
-    List<PetCategoryVO> selectAllWithParentName();
+    * @param params 查询参数
+    * @return 带分页的查询出来的数据
+    */
+    PageUtils queryPage(Map<String, Object> params);
 
-    /**
-     * 根据父分类ID查询子分类
-     * @param parentId
-     * @return
-     */
-    List<PetCategoryEntity> selectByParentId(Integer parentId);
-
-    /**
-     * 查询顶级分类
-     * @return
-     */
-    List<PetCategoryEntity> selectTopLevel();
-
-    /**
-     * 添加分类
-     * @param petCategoryEntity
-     * @return
-     */
-    boolean add(PetCategoryEntity petCategoryEntity);
-
-    /**
-     * 更新分类
-     * @param petCategoryEntity
-     * @return
-     */
-    boolean update(PetCategoryEntity petCategoryEntity);
-
-    /**
-     * 删除分类
-     * @param id
-     * @return
-     */
-    boolean delete(Integer id);
 }

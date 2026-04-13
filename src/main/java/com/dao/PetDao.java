@@ -2,8 +2,11 @@ package com.dao;
 
 import com.entity.PetEntity;
 import com.baomidou.mybatisplus.mapper.BaseMapper;
-
 import java.util.List;
+import java.util.Map;
+import com.baomidou.mybatisplus.plugins.pagination.Pagination;
+
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 宠物Dao
@@ -13,29 +16,6 @@ import java.util.List;
  */
 public interface PetDao extends BaseMapper<PetEntity> {
 
-    /**
-     * 查询所有宠物，包括分类名称
-     * @return
-     */
-    List<PetEntity> selectAllWithCategoryName();
+    List<PetEntity> selectListView(Pagination page, @Param("params") Map<String, Object> params);
 
-    /**
-     * 根据分类ID查询宠物
-     * @param categoryId
-     * @return
-     */
-    List<PetEntity> selectByCategoryId(Integer categoryId);
-
-    /**
-     * 查询上架的宠物
-     * @return
-     */
-    List<PetEntity> selectOnSale();
-
-    /**
-     * 根据关键词搜索宠物
-     * @param keyword
-     * @return
-     */
-    List<PetEntity> selectByKeyword(String keyword);
 }
