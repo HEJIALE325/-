@@ -52,6 +52,15 @@ public class PetOrderController {
 
     @Autowired
     private TokenService tokenService;
+    
+    @Autowired
+    private AddressService addressService;
+    
+    @Autowired
+    private PetService petService;
+    
+    @Autowired
+    private YonghuService yonghuService;
 
     /**
     * 后端列表
@@ -82,6 +91,7 @@ public class PetOrderController {
         }else {
             return R.error(511,"查不到数据");
         }
+
     }
 
     /**
@@ -119,8 +129,6 @@ public class PetOrderController {
         PetOrderEntity oldPetOrderEntity = petOrderService.selectById(petOrder.getId());//查询原先数据
 
         String role = String.valueOf(request.getSession().getAttribute("role"));
-//        if(false)
-//            return R.error(511,"永远不会进入");
 
             petOrderService.updateById(petOrder);//根据id更新
             return R.ok();
@@ -171,22 +179,9 @@ public class PetOrderController {
                         for(List<String> data:dataList){
                             //循环
                             PetOrderEntity petOrderEntity = new PetOrderEntity();
-//                            petOrderEntity.setOrderUuid(data.get(0));                    //订单号 要改的
-//                            petOrderEntity.setUserId(Integer.valueOf(data.get(0)));   //用户ID 要改的
-//                            petOrderEntity.setPetId(Integer.valueOf(data.get(0)));   //宠物ID 要改的
-//                            petOrderEntity.setAddressId(Integer.valueOf(data.get(0)));   //收货地址ID 要改的
-//                            petOrderEntity.setPrice(Double.valueOf(data.get(0)));   //订单价格 要改的
-//                            petOrderEntity.setOrderType(Integer.valueOf(data.get(0)));   //订单类型 要改的
-//                            petOrderEntity.setPaymentType(Integer.valueOf(data.get(0)));   //支付类型 要改的
-//                            petOrderEntity.setOrderStatus(Integer.valueOf(data.get(0)));   //订单状态：1=待付款，2=待发货，3=已发货，4=已完成，5=已取消 要改的
-//                            petOrderEntity.setCreateTime(date);//时间
                             petOrderList.add(petOrderEntity);
-
-
-                            //把要查询是否重复的字段放入map中
                         }
 
-                        //查询是否重复
                         petOrderService.insertBatch(petOrderList);
                         return R.ok();
                     }
@@ -247,6 +242,93 @@ public class PetOrderController {
         }else {
             return R.error(511,"表中有相同数据");
         }
+    }
+    
+    /**
+     * 添加订单
+     */
+    @RequestMapping("/order")
+    public R order(@RequestParam Map<String, Object> params, HttpServletRequest request){
+        logger.debug("order方法:,,Controller:{},,params:{}",this.getClass().getName(),params.toString());
+        String orderUuid = String.valueOf(new Date().getTime());
+
+        //获取当前登录用户的id
+        Integer userId = (Integer) request.getSession().getAttribute("userId");
+        if(userId == null) {
+            return R.error(511, "请先登录");
+        }
+        
+        Integer addressId = Integer.valueOf(String.valueOf(params.get("addressId")));
+        Integer petId = Integer.valueOf(String.valueOf(params.get("petId")));
+        Double price = Double.valueOf(String.valueOf(params.get("price")));
+        Integer paymentType = Integer.valueOf(String.valueOf(params.get("paymentType")));
+
+        //获取当前登录用户的个人信息
+        YonghuEntity yonghuEntity = yonghuService.selectById(userId);
+        if(yonghuEntity == null) {
+            return R.error(511, "用户不存在");
+        }
+
+        //获取宠物信息
+        PetEntity petEntity = petService.selectById(petId);
+        if(petEntity == null) {
+            return R.error(511, "查不到该宠物");
+        }
+
+        if(petEntity.getStatus() != 1) {
+            return R.error(511, "该宠物已下架");
+        }
+
+        //创建订单
+        PetOrderEntity petOrderEntity = new PetOrderEntity();
+        petOrderEntity.setOrderUuid(orderUuid);
+        petOrderEntity.setUserId(userId);
+        petOrderEntity.setPetId(petId);
+        petOrderEntity.setAddressId(addressId);
+        petOrderEntity.setPrice(price);
+        petOrderEntity.setOrderType(1);
+        petOrderEntity.setPaymentType(paymentType);
+        petOrderEntity.setOrderStatus(1); // 1=待付款
+        petOrderEntity.setCreateTime(new Date());
+        petOrderEntity.setUpdateTime(new Date());
+        
+        //插入订单
+        petOrderService.insert(petOrderEntity);
+        
+        //将宠物状态设置为已售（下架）
+        petEntity.setStatus(0);
+        petService.updateById(petEntity);
+
+        return R.ok();
+    }
+    
+    /**
+     * 支付订单
+     */
+    @RequestMapping("/pay")
+    public R pay(Integer id, HttpServletRequest request){
+        logger.debug("pay方法:,,Controller:{},,id:{}",this.getClass().getName(),id);
+        
+        PetOrderEntity petOrderEntity = petOrderService.selectById(id);
+        if(petOrderEntity == null) {
+            return R.error(511, "查不到该订单");
+        }
+        
+        Integer userId = (Integer) request.getSession().getAttribute("userId");
+        if(userId == null || !userId.equals(petOrderEntity.getUserId())) {
+            return R.error(511, "无权操作此订单");
+        }
+        
+        if(petOrderEntity.getOrderStatus() != 1) {
+            return R.error(511, "订单状态不允许支付");
+        }
+        
+        //模拟支付，直接更新订单状态为已支付（待发货）
+        petOrderEntity.setOrderStatus(2); // 2=待发货
+        petOrderEntity.setUpdateTime(new Date());
+        petOrderService.updateById(petOrderEntity);
+        
+        return R.ok();
     }
 
 }

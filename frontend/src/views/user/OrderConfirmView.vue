@@ -5,7 +5,7 @@
       <div class="container">
         <!-- 页面标题 -->
         <div class="page-header">
-          <h1>确认订单</h1>
+          <h1>{{ orderType === 'pet' ? '确认宠物购买订单' : '确认订单' }}</h1>
           <p>请确认订单信息</p>
         </div>
 
@@ -40,11 +40,24 @@
             </div>
           </div>
 
-          <!-- 商品信息 -->
+          <!-- 商品/宠物信息 -->
           <div class="section">
-            <h2 class="section-title">商品信息</h2>
+            <h2 class="section-title">{{ orderType === 'pet' ? '宠物信息' : '商品信息' }}</h2>
             <div class="product-list">
-              <div v-for="item in selectedItems" :key="item.id" class="product-item">
+              <div v-if="orderType === 'pet'" class="product-item">
+                <div class="product-image">
+                  <img :src="'http://localhost:8080/wangshangchongwudian/' + petInfo.imageUrl" :alt="petInfo.name">
+                </div>
+                <div class="product-info">
+                  <h3 class="product-name">{{ petInfo.name }}</h3>
+                  <p class="product-desc">{{ petInfo.breed }} · {{ petInfo.gender }} · {{ petInfo.age }}</p>
+                  <div class="product-price-row">
+                    <span class="product-price">¥{{ petInfo.price }}</span>
+                    <span class="product-quantity">x1</span>
+                  </div>
+                </div>
+              </div>
+              <div v-else v-for="item in selectedItems" :key="item.id" class="product-item">
                 <div class="product-image">
                   <img :src="'http://localhost:8080/wangshangchongwudian/' + item.chongwuyongpinPhoto" :alt="item.chongwuyongpinName">
                 </div>
@@ -87,7 +100,7 @@
             <h2 class="section-title">订单金额</h2>
             <div class="order-amount">
               <div class="amount-item">
-                <span class="amount-label">商品金额</span>
+                <span class="amount-label">{{ orderType === 'pet' ? '宠物金额' : '商品金额' }}</span>
                 <span class="amount-value">¥{{ subtotal.toFixed(2) }}</span>
               </div>
               <div class="amount-item">
@@ -121,7 +134,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { addressApi, chongwuyongpinOrderApi, cartApi, usersApi } from '../../utils/api'
+import { addressApi, chongwuyongpinOrderApi, cartApi, usersApi, petApi, petOrderApi } from '../../utils/api'
 import message from '../../utils/message'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
@@ -133,9 +146,14 @@ const addresses = ref([])
 const selectedAddressId = ref(null)
 const paymentType = ref(1)
 const selectedItems = ref([])
+const orderType = ref('product') // 'product' 或 'pet'
+const petInfo = ref(null)
 
 // 计算商品金额
 const subtotal = computed(() => {
+  if (orderType.value === 'pet') {
+    return petInfo.value ? parseFloat(petInfo.value.price) : 0
+  }
   return selectedItems.value.reduce((total, item) => {
     return total + (item.chongwuyongpinNewMoney * item.buyNumber)
   }, 0)
@@ -152,21 +170,17 @@ const totalAmount = computed(() => {
 // 加载地址列表
 const loadAddresses = async () => {
   try {
-    // 获取用户会话信息
     const sessionResponse = await usersApi.session()
     if (sessionResponse.code === 0 && sessionResponse.data) {
       const yonghuId = sessionResponse.data.yonghuId || sessionResponse.data.id
       
-      // 调用地址API，传递用户id
       const response = await addressApi.getList({ yonghuId, t: Date.now() })
       if (response.code === 0) {
         addresses.value = response.data.list || []
-        // 默认选择默认地址
         const defaultAddress = addresses.value.find(addr => addr.isdefaultValue === '是')
         if (defaultAddress) {
           selectedAddressId.value = defaultAddress.id
         } else if (addresses.value.length > 0) {
-          // 没有默认地址则选择第一个
           selectedAddressId.value = addresses.value[0].id
         }
       }
@@ -179,9 +193,25 @@ const loadAddresses = async () => {
   }
 }
 
+// 加载宠物信息
+const loadPetInfo = async (petId) => {
+  try {
+    const response = await petApi.getInfo(petId)
+    if (response.code === 0) {
+      petInfo.value = response.data
+    } else {
+      message.error('获取宠物信息失败')
+      router.push('/pets')
+    }
+  } catch (error) {
+    console.error('获取宠物信息失败:', error)
+    message.error('获取宠物信息失败')
+    router.push('/pets')
+  }
+}
+
 // 加载选中的商品
 const loadSelectedItems = () => {
-  // 从路由参数中获取选中的商品信息
   const selectedItemsStr = route.query.selectedItems
   if (selectedItemsStr) {
     try {
@@ -196,7 +226,6 @@ const loadSelectedItems = () => {
       router.push('/cart')
     }
   } else {
-    // 如果没有传递商品信息，从购物车获取
     message.error('请选择要购买的商品')
     router.push('/cart')
   }
@@ -222,33 +251,49 @@ const submitOrder = async () => {
   try {
     loading.value = true
     
-    // 获取用户会话信息
     const sessionResponse = await usersApi.session()
     if (sessionResponse.code === 0 && sessionResponse.data) {
       const yonghuId = sessionResponse.data.yonghuId || sessionResponse.data.id
       
-      // 构建订单参数
-      const params = {
-        addressId: selectedAddressId.value,
-        buyNumber: selectedItems.value.reduce((total, item) => total + item.buyNumber, 0),
-        chongwuyongpinId: selectedItems.value.length > 0 ? selectedItems.value[0].chongwuyongpinId : null,
-        chongwuyongpins: JSON.stringify(selectedItems.value),
-        yonghuId,
-        chongwuyongpinOrderPaymentTypes: paymentType.value,
-        t: Date.now()
-      }
-
-      // 调用创建订单接口
-      const response = await chongwuyongpinOrderApi.order(params)
-      if (response.code === 0) {
-        // 清空购物车中已购买的商品
-        const selectedIds = selectedItems.value.map(item => item.id)
-        await cartApi.delete(selectedIds)
+      if (orderType.value === 'pet') {
+        // 宠物订单
+        const params = {
+          addressId: selectedAddressId.value,
+          petId: petInfo.value.id,
+          price: petInfo.value.price,
+          paymentType: paymentType.value,
+          userId: yonghuId
+        }
         
-        message.success('订单创建成功')
-        router.push('/user/orders')
+        const response = await petOrderApi.order(params)
+        if (response.code === 0) {
+          message.success('订单创建成功')
+          router.push('/user/pet-purchase-orders')
+        } else {
+          message.error(response.msg || '订单创建失败')
+        }
       } else {
-        message.error('订单创建失败')
+        // 商品订单
+        const params = {
+          addressId: selectedAddressId.value,
+          buyNumber: selectedItems.value.reduce((total, item) => total + item.buyNumber, 0),
+          chongwuyongpinId: selectedItems.value.length > 0 ? selectedItems.value[0].chongwuyongpinId : null,
+          chongwuyongpins: JSON.stringify(selectedItems.value),
+          yonghuId,
+          chongwuyongpinOrderPaymentTypes: paymentType.value,
+          t: Date.now()
+        }
+
+        const response = await chongwuyongpinOrderApi.order(params)
+        if (response.code === 0) {
+          const selectedIds = selectedItems.value.map(item => item.id)
+          await cartApi.delete(selectedIds)
+          
+          message.success('订单创建成功')
+          router.push('/user/orders')
+        } else {
+          message.error('订单创建失败')
+        }
       }
     } else {
       message.error('获取用户信息失败')
@@ -262,9 +307,25 @@ const submitOrder = async () => {
 }
 
 // 页面加载时获取数据
-onMounted(() => {
-  loadAddresses()
-  loadSelectedItems()
+onMounted(async () => {
+  loading.value = true
+  
+  const type = route.query.type
+  if (type === 'pet') {
+    orderType.value = 'pet'
+    const petId = route.query.id
+    if (!petId) {
+      message.error('宠物ID不存在')
+      router.push('/pets')
+      return
+    }
+    await loadPetInfo(petId)
+  } else {
+    loadSelectedItems()
+  }
+  
+  await loadAddresses()
+  loading.value = false
 })
 </script>
 
@@ -457,6 +518,12 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.product-desc {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin-bottom: var(--spacing-sm);
 }
 
 .product-price-row {

@@ -29,10 +29,11 @@
                   class="form-select"
                 >
                   <option value="">全部</option>
-                  <option value="0">待支付</option>
-                  <option value="1">已支付</option>
-                  <option value="2">已完成</option>
-                  <option value="3">已取消</option>
+                  <option value="1">待付款</option>
+                  <option value="2">待发货</option>
+                  <option value="3">已发货</option>
+                  <option value="4">已完成</option>
+                  <option value="5">已取消</option>
                 </select>
               </div>
               <div class="form-actions">
@@ -300,14 +301,13 @@ const viewOrderDetail = (order) => {
 
 // 立即支付
 const payOrder = async (orderId) => {
-  // 这里可以实现支付功能
   try {
-    const response = await petOrderApi.updateStatus(orderId, 1)
+    const response = await petOrderApi.pay(orderId)
     if (response.code === 0) {
       message.success('支付成功')
       fetchOrders() // 重新获取订单列表
     } else {
-      message.error('支付失败')
+      message.error(response.msg || '支付失败')
     }
   } catch (error) {
     console.error('支付失败:', error)
@@ -319,7 +319,7 @@ const payOrder = async (orderId) => {
 const cancelOrder = async (orderId) => {
   if (confirm('确定要取消该订单吗？')) {
     try {
-      const response = await petOrderApi.updateStatus(orderId, 3)
+      const response = await petOrderApi.updateStatus(orderId, 5)
       if (response.code === 0) {
         message.success('订单取消成功')
         fetchOrders() // 重新获取订单列表
@@ -336,13 +336,15 @@ const cancelOrder = async (orderId) => {
 // 获取状态样式类
 const getStatusClass = (status) => {
   switch (status) {
-    case 0:
-      return 'status-pending'
     case 1:
-      return 'status-processing'
+      return 'status-pending'
     case 2:
-      return 'status-completed'
+      return 'status-processing'
     case 3:
+      return 'status-shipped'
+    case 4:
+      return 'status-completed'
+    case 5:
       return 'status-cancelled'
     default:
       return ''
@@ -352,13 +354,15 @@ const getStatusClass = (status) => {
 // 获取状态文本
 const getStatusText = (status) => {
   switch (status) {
-    case 0:
-      return '待支付'
     case 1:
-      return '已支付'
+      return '待付款'
     case 2:
-      return '已完成'
+      return '待发货'
     case 3:
+      return '已发货'
+    case 4:
+      return '已完成'
+    case 5:
       return '已取消'
     default:
       return '未知状态'
@@ -588,6 +592,11 @@ onMounted(() => {
 .status-completed {
   background-color: rgba(25, 135, 84, 0.1);
   color: #198754;
+}
+
+.status-shipped {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
 }
 
 .status-cancelled {

@@ -491,9 +491,13 @@ export const petOrderApi = {
   // 前端保存
   add: data => http.post('/petOrder/add', data),
   // 获取用户宠物购买订单列表
-  getUserOrders: (yonghuId, params = {}) => http.get('/petOrder/list', { ...params, yonghuId, t: Date.now() }),
+  getUserOrders: (yonghuId, params = {}) => http.get('/petOrder/list', { ...params, userId: yonghuId, t: Date.now() }),
   // 更新订单状态
-  updateStatus: (orderId, status) => http.post('/petOrder/update', { id: orderId, status })
+  updateStatus: (orderId, status) => http.post('/petOrder/update', { id: orderId, orderStatus: status }),
+  // 提交订单
+  order: params => http.get('/petOrder/order', params),
+  // 支付订单
+  pay: orderId => http.get('/petOrder/pay', { id: orderId, t: Date.now() })
 }
 
 // 导出所有API服务
