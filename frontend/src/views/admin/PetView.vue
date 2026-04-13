@@ -199,6 +199,8 @@
 
 <script>
 import { petApi, petCategoryApi, fileApi } from '../../utils/api'
+import { message } from '../../utils/message'
+import confirm from '../../utils/confirm'
 
 export default {
   name: 'PetView',
@@ -341,7 +343,11 @@ export default {
       }
     },
     async handleDelete(id) {
-      if (confirm('确定要删除这个宠物吗？')) {
+      const result = await confirm({
+        title: '确认删除',
+        message: '确定要删除这个宠物吗？'
+      })
+      if (result) {
         try {
           await petApi.delete([id])
           await this.fetchCategories()
@@ -389,11 +395,11 @@ export default {
         if (response.code === 0) {
           this.formData.imageUrl = 'upload/' + response.file
         } else {
-          alert('上传失败：' + response.msg)
+          message.error('上传失败：' + response.msg)
         }
       } catch (error) {
         console.error('图片上传失败:', error)
-        alert('上传失败，请重试')
+        message.error('上传失败，请重试')
       }
     },
     getImageUrl(imageUrl) {

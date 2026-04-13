@@ -110,6 +110,7 @@
 
 <script>
 import { petCategoryApi } from '../../utils/api'
+import confirm from '../../utils/confirm'
 
 export default {
   name: 'PetCategoryView',
@@ -187,7 +188,11 @@ export default {
       }
     },
     async handleDelete(id) {
-      if (confirm('确定要删除这个分类吗？')) {
+      const result = await confirm({
+        title: '确认删除',
+        message: '确定要删除这个分类吗？'
+      })
+      if (result) {
         try {
           await petCategoryApi.delete([id])
           this.fetchCategories()

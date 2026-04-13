@@ -185,6 +185,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { petOrderApi, yonghuApi } from '../../utils/api'
 import message from '../../utils/message'
+import confirm from '../../utils/confirm'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 
@@ -314,7 +315,11 @@ const payOrder = async (orderId) => {
 
 // 取消订单
 const cancelOrder = async (orderId) => {
-  if (confirm('确定要取消该订单吗？')) {
+  const result = await confirm({
+    title: '确认取消',
+    message: '确定要取消该订单吗？'
+  })
+  if (result) {
     try {
       const response = await petOrderApi.updateStatus(orderId, 5)
       if (response.code === 0) {

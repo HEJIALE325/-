@@ -242,6 +242,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { chongwujiyangYuyueApi, yonghuApi, dictionaryApi } from '../../utils/api'
 import message from '../../utils/message'
+import confirm from '../../utils/confirm'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 
@@ -351,7 +352,11 @@ const viewOrderDetail = (order) => {
 
 // 取消订单
 const cancelOrder = async (orderId) => {
-  if (confirm('确定要取消该订单吗？')) {
+  const result = await confirm({
+    title: '确认取消',
+    message: '确定要取消该订单吗？'
+  })
+  if (result) {
     try {
       const response = await chongwujiyangYuyueApi.delete([orderId])
       if (response.code === 0) {

@@ -198,6 +198,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { message } from '../../utils/message'
 
 // 列表数据
 const list = ref([])
@@ -336,10 +337,10 @@ const handleSubmit = async () => {
       list.value[index] = { ...currentItem.value }
     }
     closeProcessModal()
-    alert('处理成功')
+    message.success('处理成功')
   } catch (error) {
     console.error('处理咨询失败:', error)
-    alert('处理失败')
+    message.error('处理失败')
   } finally {
     isLoading.value = false
   }
