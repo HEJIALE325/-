@@ -224,6 +224,7 @@ export default {
         categoryId: '',
         price: 0,
         description: '',
+        imageUrl: '',
         status: 1
       }
       this.showModal = true
