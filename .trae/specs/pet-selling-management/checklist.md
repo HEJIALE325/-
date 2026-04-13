@@ -1,16 +1,15 @@
 # 网上宠物店系统 - 宠物售卖管理功能验证检查清单
 
 ## 数据库设计与实现
-- [ ] 宠物表(pets)结构正确创建，包含必要字段（id, name, category_id, price, stock, status, description, image_url等）
-- [ ] 宠物分类表(pet_category)结构正确创建
+- [ ] 宠物表(pets)结构正确创建，包含必要字段（id, name, category_id, price, status, description, image_url, gender, age, breed等）
+- [ ] 宠物分类表(pet_category)结构正确创建，支持层级分类
 - [ ] 宠物订单表(pet_order)结构正确创建，与现有订单系统兼容
 - [ ] 表之间的关联关系正确建立
 
 ## 后端API功能
 - [ ] 宠物CRUD接口正常工作
-- [ ] 宠物分类管理接口正常工作
+- [ ] 宠物分类管理接口正常工作（支持层级分类）
 - [ ] 宠物状态管理接口正常工作
-- [ ] 宠物库存管理接口正常工作
 - [ ] 宠物订单创建接口正常工作
 - [ ] 宠物订单状态更新接口正常工作
 - [ ] 宠物订单详情查询接口正常工作
