@@ -224,7 +224,6 @@ export default {
         imageUrl: '',
         status: 1,
         gender: '',
-        breed: '',
         age: ''
       }
     }
@@ -313,7 +312,9 @@ export default {
         price: 0,
         description: '',
         imageUrl: '',
-        status: 1
+        status: 1,
+        gender: '',
+        age: ''
       }
       this.showModal = true
     },

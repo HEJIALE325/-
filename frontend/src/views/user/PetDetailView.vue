@@ -20,7 +20,7 @@
             <div class="pet-basic-info">
               <div class="info-item">
                 <span class="info-label">品种：</span>
-                <span class="info-value">{{ pet.breed }}</span>
+                <span class="info-value">{{ pet.breed || '未提供' }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">性别：</span>

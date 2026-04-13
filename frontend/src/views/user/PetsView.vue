@@ -77,7 +77,7 @@
             <div class="pet-info">
               <h3>{{ pet.name }}</h3>
               <p class="pet-category">{{ pet.categoryName }}</p>
-              <p class="pet-breed">{{ pet.breed }}</p>
+              <p class="pet-breed">{{ pet.breed || '未提供' }}</p>
               <p class="pet-gender-age">{{ pet.gender }} · {{ pet.age }}</p>
               <div class="pet-price">¥{{ pet.price }}</div>
               <button class="btn btn-primary buy-btn" @click.stop="buyPet(pet.id)">
