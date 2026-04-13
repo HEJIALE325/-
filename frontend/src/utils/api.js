@@ -237,7 +237,11 @@ export const chongwuyongpinOrderApi = {
   // 确认收货
   receiving: id => http.get('/chongwuyongpinOrder/receiving', { id, t: Date.now() }),
   // 评价
-  commentback: (id, commentbackText, chongwuyongpinCommentbackPingfenNumber) => http.get('/chongwuyongpinOrder/commentback', { id, commentbackText, chongwuyongpinCommentbackPingfenNumber, t: Date.now() })
+  commentback: (id, commentbackText, chongwuyongpinCommentbackPingfenNumber) => http.get('/chongwuyongpinOrder/commentback', { id, commentbackText, chongwuyongpinCommentbackPingfenNumber, t: Date.now() }),
+  // 微信支付
+  wechatPay: params => http.get('/chongwuyongpinOrder/wechatPay', params),
+  // 支付宝支付
+  alipay: params => http.get('/chongwuyongpinOrder/alipay', params)
 }
 
 // 通用相关API服务

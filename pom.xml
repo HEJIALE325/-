@@ -121,12 +121,7 @@
             <version>4.4.1</version>
         </dependency>
 
-        <!-- poi高版本额外包 -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.2</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-examples</artifactId>
@@ -165,7 +160,19 @@
             </exclusions>
         </dependency>
 
+        <!-- 微信支付SDK -->
+        <dependency>
+            <groupId>com.github.wxpay</groupId>
+            <artifactId>wxpay-sdk</artifactId>
+            <version>0.0.3</version>
+        </dependency>
 
+        <!-- 支付宝支付SDK -->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.10.177.ALL</version>
+        </dependency>
 
     </dependencies>
 

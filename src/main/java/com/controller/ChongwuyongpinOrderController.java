@@ -2,6 +2,9 @@
 package com.controller;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -9,9 +12,11 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.*;
 import org.springframework.beans.BeanUtils;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.context.ContextLoader;
 import javax.servlet.ServletContext;
 import com.service.TokenService;
+import com.service.PayService;
 import com.utils.*;
 import java.lang.reflect.InvocationTargetException;
 
@@ -80,6 +85,8 @@ public class ChongwuyongpinOrderController {
     private YonghuService yonghuService;//用户
     @Autowired
     private UsersService usersService;//管理员
+    @Autowired
+    private PayService payService;//支付服务
 
 
     /**
@@ -437,43 +444,28 @@ public class ChongwuyongpinOrderController {
             }
 
             //订单信息表增加数据
-            ChongwuyongpinOrderEntity chongwuyongpinOrderEntity = new ChongwuyongpinOrderEntity<>();
+            ChongwuyongpinOrderEntity chongwuyongpinOrderEntity = new ChongwuyongpinOrderEntity();
 
             //赋值订单信息
             chongwuyongpinOrderEntity.setChongwuyongpinOrderUuidNumber(chongwuyongpinOrderUuidNumber);//订单号
             chongwuyongpinOrderEntity.setAddressId(addressId);//收货地址
             chongwuyongpinOrderEntity.setChongwuyongpinId(chongwuyongpinId);//商品
-                        chongwuyongpinOrderEntity.setYonghuId(userId);//用户
-            chongwuyongpinOrderEntity.setBuyNumber(buyNumber);//购买数量 ？？？？？？
-            chongwuyongpinOrderEntity.setChongwuyongpinOrderTypes(101);//订单类型
+            chongwuyongpinOrderEntity.setYonghuId(userId);//用户
+            chongwuyongpinOrderEntity.setBuyNumber(buyNumber);//购买数量
+            chongwuyongpinOrderEntity.setChongwuyongpinOrderTypes(100);//订单类型（待支付）
             chongwuyongpinOrderEntity.setChongwuyongpinOrderPaymentTypes(chongwuyongpinOrderPaymentTypes);//支付类型
             chongwuyongpinOrderEntity.setInsertTime(new Date());//订单创建时间
             chongwuyongpinOrderEntity.setCreateTime(new Date());//创建时间
 
-            //判断是什么支付方式 1代表余额 2代表积分
-            if(chongwuyongpinOrderPaymentTypes == 1){//余额支付
-                //计算金额
-                Double money = new BigDecimal(chongwuyongpinEntity.getChongwuyongpinNewMoney()).multiply(new BigDecimal(buyNumber)).multiply(zhekou).doubleValue();
-
-                if(yonghuEntity.getNewMoney() - money <0 ){
-                    return R.error("余额不足,请充值！！！");
-                }else{
-                    //计算所获得积分
-                    Double buyJifen =0.0;
-                yonghuEntity.setNewMoney(yonghuEntity.getNewMoney() - money); //设置金额
-
-
-                    chongwuyongpinOrderEntity.setChongwuyongpinOrderTruePrice(money);
-
-                }
-            }
+            // 计算金额
+            Double money = new BigDecimal(chongwuyongpinEntity.getChongwuyongpinNewMoney()).multiply(new BigDecimal(buyNumber)).multiply(zhekou).doubleValue();
+            chongwuyongpinOrderEntity.setChongwuyongpinOrderTruePrice(money);
             chongwuyongpinOrderList.add(chongwuyongpinOrderEntity);
             chongwuyongpinList.add(chongwuyongpinEntity);
 
         }
         chongwuyongpinOrderService.insertBatch(chongwuyongpinOrderList);
         chongwuyongpinService.updateBatchById(chongwuyongpinList);
-        yonghuService.updateById(yonghuEntity);
         if(cartIds != null && cartIds.size()>0)
             cartService.deleteBatchIds(cartIds);
 
@@ -670,6 +662,156 @@ public class ChongwuyongpinOrderController {
         dictionaryService.dictionaryConvert(result, request);
         
         return R.ok().put("data", result);
+    }
+
+    /**
+     * 微信支付
+     */
+    @RequestMapping("/wechatPay")
+    public R wechatPay(@RequestParam Map<String, Object> params, HttpServletRequest request){
+        logger.debug("wechatPay方法:,,Controller:{},,params:{}",this.getClass().getName(),params.toString());
+        
+        try {
+            String orderNo = String.valueOf(params.get("orderNo"));
+            int amount = Integer.valueOf(String.valueOf(params.get("amount")));
+            String body = String.valueOf(params.get("body"));
+            String openid = String.valueOf(params.get("openid"));
+            
+            Map<String, String> payParams = payService.wechatPayUnifiedOrder(orderNo, amount, body, openid);
+            if (payParams != null) {
+                return R.ok().put("data", payParams);
+            } else {
+                return R.error(511, "微信支付下单失败");
+            }
+        } catch (Exception e) {
+            logger.error("微信支付异常: {}", e.getMessage(), e);
+            return R.error(511, "微信支付异常");
+        }
+    }
+
+    /**
+     * 微信支付回调
+     */
+    @RequestMapping("/wechatPayNotify")
+    public void wechatPayNotify(HttpServletRequest request, HttpServletResponse response){
+        logger.debug("wechatPayNotify方法:,,Controller:{}",this.getClass().getName());
+        
+        try {
+            // 读取回调数据
+            InputStream inputStream = request.getInputStream();
+            byte[] buffer = new byte[1024];
+            int len;
+            StringBuilder sb = new StringBuilder();
+            while ((len = inputStream.read(buffer)) != -1) {
+                sb.append(new String(buffer, 0, len, "UTF-8"));
+            }
+            inputStream.close();
+            
+            String notifyData = sb.toString();
+            logger.info("微信支付回调数据: {}", notifyData);
+            
+            // 处理回调
+            Map<String, String> result = payService.handleWechatPayNotify(notifyData);
+            
+            // 返回结果
+            response.setContentType("text/xml");
+            PrintWriter out = response.getWriter();
+            out.write(com.github.wxpay.sdk.WXPayUtil.mapToXml(result));
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            logger.error("处理微信支付回调异常: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 支付宝支付
+     */
+    @RequestMapping("/alipay")
+    public R alipay(@RequestParam Map<String, Object> params, HttpServletRequest request){
+        logger.debug("alipay方法:,,Controller:{},,params:{}",this.getClass().getName(),params.toString());
+        
+        try {
+            String orderNo = String.valueOf(params.get("orderNo"));
+            double amount = Double.valueOf(String.valueOf(params.get("amount")));
+            String subject = String.valueOf(params.get("subject"));
+            String body = String.valueOf(params.get("body"));
+            
+            String form = payService.alipayTradePagePay(orderNo, amount, subject, body);
+            if (form != null) {
+                return R.ok().put("data", form);
+            } else {
+                return R.error(511, "支付宝支付下单失败");
+            }
+        } catch (Exception e) {
+            logger.error("支付宝支付异常: {}", e.getMessage(), e);
+            return R.error(511, "支付宝支付异常");
+        }
+    }
+
+    /**
+     * 支付宝支付回调
+     */
+    @RequestMapping("/alipayNotify")
+    public void alipayNotify(HttpServletRequest request, HttpServletResponse response){
+        logger.debug("alipayNotify方法:,,Controller:{}",this.getClass().getName());
+        
+        try {
+            // 获取回调参数
+            Map<String, String> params = new HashMap<>();
+            Enumeration<String> parameterNames = request.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                String name = parameterNames.nextElement();
+                params.put(name, request.getParameter(name));
+            }
+            
+            logger.info("支付宝支付回调数据: {}", params);
+            
+            // 处理回调
+            boolean result = payService.handleAlipayNotify(params);
+            
+            // 返回结果
+            response.setContentType("text/plain");
+            PrintWriter out = response.getWriter();
+            out.write(result ? "success" : "fail");
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            logger.error("处理支付宝支付回调异常: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 支付宝支付返回
+     */
+    @RequestMapping("/alipayReturn")
+    public String alipayReturn(HttpServletRequest request, HttpServletResponse response){
+        logger.debug("alipayReturn方法:,,Controller:{}",this.getClass().getName());
+        
+        try {
+            // 获取回调参数
+            Map<String, String> params = new HashMap<>();
+            Enumeration<String> parameterNames = request.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                String name = parameterNames.nextElement();
+                params.put(name, request.getParameter(name));
+            }
+            
+            logger.info("支付宝支付返回数据: {}", params);
+            
+            // 验证签名
+            boolean signVerified = payService.verifyAlipaySign(params);
+            if (signVerified) {
+                // 支付成功，跳转到订单列表页面
+                return "redirect:/user/orders";
+            } else {
+                // 签名验证失败，跳转到错误页面
+                return "redirect:/error";
+            }
+        } catch (Exception e) {
+            logger.error("处理支付宝支付返回异常: {}", e.getMessage(), e);
+            return "redirect:/error";
+        }
     }
 
 }

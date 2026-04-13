@@ -195,6 +195,25 @@
               </div>
             </div>
 
+            <!-- 支付记录 -->
+            <div class="detail-section" v-if="currentOrder.chongwuyongpinOrderTypes >= 101">
+              <h4>支付记录</h4>
+              <div class="payment-record">
+                <div class="payment-item">
+                  <span class="payment-label">支付方式：</span>
+                  <span class="payment-value">{{ currentOrder.chongwuyongpinOrderPaymentValue || '余额支付' }}</span>
+                </div>
+                <div class="payment-item">
+                  <span class="payment-label">支付时间：</span>
+                  <span class="payment-value">{{ currentOrder.insertTime || '未知' }}</span>
+                </div>
+                <div class="payment-item">
+                  <span class="payment-label">支付金额：</span>
+                  <span class="payment-value total">¥{{ (currentOrder.totalPrice || currentOrder.chongwuyongpinOrderTruePrice).toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+
             <!-- 多商品订单列表 -->
             <div class="detail-section" v-if="currentOrder.orderDetails && currentOrder.orderDetails.length > 1">
               <h4>商品清单 ({{ currentOrder.orderDetails.length }}件商品)</h4>
@@ -1374,6 +1393,43 @@ onMounted(() => {
 .status-badge.reviewed {
   background-color: #d1ecf1;
   color: #0c5460;
+}
+
+/* 支付记录样式 */
+.payment-record {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.payment-item:last-child {
+  border-bottom: none;
+}
+
+.payment-label {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.payment-value {
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+  font-weight: 400;
+}
+
+.payment-value.total {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: var(--fs-base);
 }
 
 /* 多商品列表样式 */
