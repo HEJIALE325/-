@@ -434,7 +434,7 @@ INSERT INTO `pet_category` (`name`, `parent_id`, `level`, `sort`) VALUES
 ('布偶', 2, 2, 3);
  
 -- 宠物
-INSERT INTO `pets` (`name`, `category_id`, `gender`, `age`, `breed`, `price`, `description`, `image_url`, `status`) VALUES
-('小黑', 4, '公', '2个月', '拉布拉多', 1500.00, '活泼可爱，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20black%20labrador%20puppy&image_size=square_hd', 1),
-('小白', 5, '母', '3个月', '金毛', 2000.00, '温顺乖巧，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20golden%20retriever%20puppy&image_size=square_hd', 1),
-('咪咪', 7, '母', '1个月', '英短', 1800.00, '粘人可爱，已驱虫', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20british%20shorthair%20kitten&image_size=square_hd', 1);
+INSERT INTO `pets` (`name`, `category_id`, `gender`, `age`, `price`, `description`, `image_url`, `status`) VALUES
+('小黑', 4, '公', '2个月', 1500.00, '活泼可爱，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20black%20labrador%20puppy&image_size=square_hd', 1),
+('小白', 5, '母', '3个月', 2000.00, '温顺乖巧，已接种疫苗', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20golden%20retriever%20puppy&image_size=square_hd', 1),
+('咪咪', 7, '母', '1个月', 1800.00, '粘人可爱，已驱虫', 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20british%20shorthair%20kitten&image_size=square_hd', 1);
