@@ -44,7 +44,7 @@
           <div class="section">
             <h2 class="section-title">{{ orderType === 'pet' ? '宠物信息' : '商品信息' }}</h2>
             <div class="product-list">
-              <div v-if="orderType === 'pet'" class="product-item">
+              <div v-if="orderType === 'pet' && petInfo" class="product-item">
                 <div class="product-image">
                   <img :src="'http://localhost:8080/wangshangchongwudian/' + petInfo.imageUrl" :alt="petInfo.name">
                 </div>
@@ -55,6 +55,11 @@
                     <span class="product-price">¥{{ petInfo.price }}</span>
                     <span class="product-quantity">x1</span>
                   </div>
+                </div>
+              </div>
+              <div v-else-if="orderType === 'pet'" class="product-item">
+                <div class="product-info">
+                  <p>宠物信息加载中...</p>
                 </div>
               </div>
               <div v-else v-for="item in selectedItems" :key="item.id" class="product-item">
@@ -196,17 +201,20 @@ const loadAddresses = async () => {
 // 加载宠物信息
 const loadPetInfo = async (petId) => {
   try {
+    console.log('加载宠物信息，ID:', petId)
     const response = await petApi.getInfo(petId)
+    console.log('宠物信息响应:', response)
     if (response.code === 0) {
       petInfo.value = response.data
+      console.log('宠物信息:', petInfo.value)
     } else {
-      message.error('获取宠物信息失败')
+      message.error('获取宠物信息失败: ' + response.msg)
       router.push('/pets')
     }
   } catch (error) {
     console.error('获取宠物信息失败:', error)
-    message.error('获取宠物信息失败')
-    router.push('/pets')
+    message.error('获取宠物信息失败: ' + error.message)
+    // 不要直接跳转到pets页面，让用户看到错误信息
   }
 }
 
@@ -255,7 +263,7 @@ const submitOrder = async () => {
     if (sessionResponse.code === 0 && sessionResponse.data) {
       const yonghuId = sessionResponse.data.yonghuId || sessionResponse.data.id
       
-      if (orderType.value === 'pet') {
+      if (orderType.value === 'pet' && petInfo.value) {
         // 宠物订单
         const params = {
           addressId: selectedAddressId.value,
@@ -272,6 +280,8 @@ const submitOrder = async () => {
         } else {
           message.error(response.msg || '订单创建失败')
         }
+      } else if (orderType.value === 'pet') {
+        message.error('宠物信息加载失败，请重新尝试')
       } else {
         // 商品订单
         const params = {

@@ -118,7 +118,7 @@ const fetchPetDetail = async () => {
 // 立即购买
 const buyPet = () => {
   if (pet.value && pet.value.status === 1) {
-    router.push(`/user/order-confirm?type=pet&id=${pet.value.id}`)
+    router.push(`/order-confirm?type=pet&id=${pet.value.id}`)
   }
 }
 
