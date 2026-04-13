@@ -26,8 +26,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
-import com.entity.*;
+import com.entity.PetOrderEntity;
 import com.entity.view.*;
+import com.entity.vo.PetOrderVO;
 import com.service.*;
 import com.utils.PageUtils;
 import com.utils.R;
@@ -204,6 +205,14 @@ public class PetOrderController {
 
         CommonUtil.checkMap(params);
         PageUtils page = petOrderService.queryPage(params);
+        
+        // 将实体转换为VO，包含完整信息
+        List<PetOrderEntity> entityList = (List<PetOrderEntity>) page.getList();
+        List<PetOrderVO> voList = new ArrayList<>();
+        for (PetOrderEntity entity : entityList) {
+            voList.add(new PetOrderVO(entity));
+        }
+        page.setList(voList);
 
         return R.ok().put("data", page);
     }
@@ -216,7 +225,9 @@ public class PetOrderController {
         logger.debug("detail方法:,,Controller:{},,id:{}",this.getClass().getName(),id);
         PetOrderEntity petOrder = petOrderService.selectById(id);
             if(petOrder !=null){
-                return R.ok().put("data", petOrder);
+                // 转换为VO返回
+                PetOrderVO vo = new PetOrderVO(petOrder);
+                return R.ok().put("data", vo);
             }else {
                 return R.error(511,"查不到数据");
             }
@@ -291,6 +302,13 @@ public class PetOrderController {
         petOrderEntity.setOrderStatus(1); // 1=待付款
         petOrderEntity.setCreateTime(new Date());
         petOrderEntity.setUpdateTime(new Date());
+        
+        //保存宠物信息快照
+        petOrderEntity.setPetName(petEntity.getName());
+        petOrderEntity.setPetImageUrl(petEntity.getImageUrl());
+        petOrderEntity.setPetGender(petEntity.getGender());
+        petOrderEntity.setPetAge(petEntity.getAge());
+        petOrderEntity.setPetDescription(petEntity.getDescription());
         
         //插入订单
         petOrderService.insert(petOrderEntity);

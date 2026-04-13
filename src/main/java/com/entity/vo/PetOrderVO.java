@@ -44,6 +44,26 @@ public class PetOrderVO implements Serializable {
     private String petName;
 
     /**
+     * 宠物图片URL
+     */
+    private String petImageUrl;
+
+    /**
+     * 宠物性别
+     */
+    private String petGender;
+
+    /**
+     * 宠物年龄
+     */
+    private String petAge;
+
+    /**
+     * 宠物描述
+     */
+    private String petDescription;
+
+    /**
      * 收货地址ID
      */
     private Integer addressId;
@@ -101,6 +121,11 @@ public class PetOrderVO implements Serializable {
         this.orderUuid = entity.getOrderUuid();
         this.userId = entity.getUserId();
         this.petId = entity.getPetId();
+        this.petName = entity.getPetName();
+        this.petImageUrl = entity.getPetImageUrl();
+        this.petGender = entity.getPetGender();
+        this.petAge = entity.getPetAge();
+        this.petDescription = entity.getPetDescription();
         this.addressId = entity.getAddressId();
         this.price = entity.getPrice();
         this.orderType = entity.getOrderType();
@@ -193,6 +218,38 @@ public class PetOrderVO implements Serializable {
 
     public void setPetName(String petName) {
         this.petName = petName;
+    }
+
+    public String getPetImageUrl() {
+        return petImageUrl;
+    }
+
+    public void setPetImageUrl(String petImageUrl) {
+        this.petImageUrl = petImageUrl;
+    }
+
+    public String getPetGender() {
+        return petGender;
+    }
+
+    public void setPetGender(String petGender) {
+        this.petGender = petGender;
+    }
+
+    public String getPetAge() {
+        return petAge;
+    }
+
+    public void setPetAge(String petAge) {
+        this.petAge = petAge;
+    }
+
+    public String getPetDescription() {
+        return petDescription;
+    }
+
+    public void setPetDescription(String petDescription) {
+        this.petDescription = petDescription;
     }
 
     public Integer getAddressId() {

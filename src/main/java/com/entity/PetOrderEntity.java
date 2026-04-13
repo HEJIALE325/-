@@ -146,6 +146,46 @@ public class PetOrderEntity<T> implements Serializable {
 
     private Date updateTime;
 
+    /**
+     * 宠物名称快照
+     */
+    @ColumnInfo(comment="宠物名称快照",type="varchar(100)")
+    @TableField(value = "pet_name")
+
+    private String petName;
+
+    /**
+     * 宠物图片URL快照
+     */
+    @ColumnInfo(comment="宠物图片URL快照",type="varchar(255)")
+    @TableField(value = "pet_image_url")
+
+    private String petImageUrl;
+
+    /**
+     * 宠物性别快照
+     */
+    @ColumnInfo(comment="宠物性别快照",type="varchar(10)")
+    @TableField(value = "pet_gender")
+
+    private String petGender;
+
+    /**
+     * 宠物年龄快照
+     */
+    @ColumnInfo(comment="宠物年龄快照",type="varchar(20)")
+    @TableField(value = "pet_age")
+
+    private String petAge;
+
+    /**
+     * 宠物描述快照
+     */
+    @ColumnInfo(comment="宠物描述快照",type="text")
+    @TableField(value = "pet_description")
+
+    private String petDescription;
+
 
     /**
 	 * 获取：主键
@@ -289,6 +329,72 @@ public class PetOrderEntity<T> implements Serializable {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    /**
+	 * 获取：宠物名称快照
+	 */
+    public String getPetName() {
+        return petName;
+    }
+    /**
+	 * 设置：宠物名称快照
+	 */
+
+    public void setPetName(String petName) {
+        this.petName = petName;
+    }
+    /**
+	 * 获取：宠物图片URL快照
+	 */
+    public String getPetImageUrl() {
+        return petImageUrl;
+    }
+    /**
+	 * 设置：宠物图片URL快照
+	 */
+
+    public void setPetImageUrl(String petImageUrl) {
+        this.petImageUrl = petImageUrl;
+    }
+    /**
+	 * 获取：宠物性别快照
+	 */
+    public String getPetGender() {
+        return petGender;
+    }
+    /**
+	 * 设置：宠物性别快照
+	 */
+
+    public void setPetGender(String petGender) {
+        this.petGender = petGender;
+    }
+    /**
+	 * 获取：宠物年龄快照
+	 */
+    public String getPetAge() {
+        return petAge;
+    }
+    /**
+	 * 设置：宠物年龄快照
+	 */
+
+    public void setPetAge(String petAge) {
+        this.petAge = petAge;
+    }
+    /**
+	 * 获取：宠物描述快照
+	 */
+    public String getPetDescription() {
+        return petDescription;
+    }
+    /**
+	 * 设置：宠物描述快照
+	 */
+
+    public void setPetDescription(String petDescription) {
+        this.petDescription = petDescription;
     }
 
     @Override
