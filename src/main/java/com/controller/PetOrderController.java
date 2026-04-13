@@ -142,8 +142,18 @@ public class PetOrderController {
 
         String role = String.valueOf(request.getSession().getAttribute("role"));
 
-            petOrderService.updateById(petOrder);//根据id更新
-            return R.ok();
+        petOrderService.updateById(petOrder);//根据id更新
+        
+        // 如果订单被取消，将宠物恢复为上架状态
+        if (petOrder.getOrderStatus() != null && petOrder.getOrderStatus() == 5) {
+            PetEntity petEntity = petService.selectById(oldPetOrderEntity.getPetId());
+            if (petEntity != null) {
+                petEntity.setStatus(1); // 1=上架状态
+                petService.updateById(petEntity);
+            }
+        }
+        
+        return R.ok();
     }
 
 
@@ -155,6 +165,16 @@ public class PetOrderController {
     public R delete(@RequestBody Integer[] ids, HttpServletRequest request){
         logger.debug("delete:,,Controller:{},,ids:{}",this.getClass().getName(),ids.toString());
         List<PetOrderEntity> oldPetOrderList =petOrderService.selectBatchIds(Arrays.asList(ids));//要删除的数据
+        
+        // 遍历要删除的订单，将对应的宠物恢复为上架状态
+        for (PetOrderEntity order : oldPetOrderList) {
+            PetEntity petEntity = petService.selectById(order.getPetId());
+            if (petEntity != null) {
+                petEntity.setStatus(1); // 1=上架状态
+                petService.updateById(petEntity);
+            }
+        }
+        
         petOrderService.deleteBatchIds(Arrays.asList(ids));
 
         return R.ok();
