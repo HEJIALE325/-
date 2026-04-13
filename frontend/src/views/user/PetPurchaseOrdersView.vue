@@ -53,7 +53,7 @@
             <thead>
               <tr>
                 <th>订单编号</th>
-                <th>宠物名称</th>
+                <th>宠物信息</th>
                 <th>宠物品种</th>
                 <th>订单金额</th>
                 <th>下单时间</th>
@@ -64,7 +64,12 @@
             <tbody>
               <tr v-for="order in orders" :key="order.id">
                 <td>{{ order.id }}</td>
-                <td>{{ order.petName }}</td>
+                <td>
+                  <div class="pet-info-cell">
+                    <img :src="'http://localhost:8080/wangshangchongwudian/' + order.petImageUrl" :alt="order.petName" class="pet-thumb" v-if="order.petImageUrl">
+                    <span>{{ order.petName }}</span>
+                  </div>
+                </td>
                 <td>{{ order.petAge || '-' }}</td>
                 <td>¥{{ order.price }}</td>
                 <td>{{ formatDate(order.createTime) }}</td>
@@ -560,6 +565,21 @@ onMounted(() => {
 .admin-table tr:hover {
   background-color: var(--hover-bg);
   transition: background-color 0.2s ease;
+}
+
+/* 宠物信息单元格样式 */
+.pet-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pet-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 /* 状态标签样式 */

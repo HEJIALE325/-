@@ -20,11 +20,11 @@
                 <label for="filter-orderStatus">状态</label>
                 <select id="filter-orderStatus" v-model="filterForm.orderStatus">
                   <option value="">全部状态</option>
-                  <option value="0">待支付</option>
-                  <option value="1">已支付</option>
-                  <option value="2">已发货</option>
-                  <option value="3">已完成</option>
-                  <option value="4">已取消</option>
+                  <option value="1">待付款</option>
+                  <option value="2">待发货</option>
+                  <option value="3">已发货</option>
+                  <option value="4">已完成</option>
+                  <option value="5">已取消</option>
                 </select>
               </div>
               <div class="form-actions">
@@ -52,28 +52,107 @@
               <tr v-for="order in orders" :key="order.id">
                 <td>{{ order.id }}</td>
                 <td>{{ order.orderUuid }}</td>
-                <td>{{ order.userName }}</td>
-                <td>{{ order.petName }}</td>
-                <td>{{ order.price }}</td>
+                <td>{{ order.userName || '-' }}</td>
+                <td>
+                  <div class="pet-info-cell">
+                    <img :src="'http://localhost:8080/wangshangchongwudian/' + order.petImageUrl" :alt="order.petName" class="pet-thumb" v-if="order.petImageUrl">
+                    <span>{{ order.petName }}</span>
+                  </div>
+                </td>
+                <td>¥{{ order.price }}</td>
                 <td>
                   <span class="status-badge" :class="getStatusClass(order.orderStatus)">
                     {{ getStatusText(order.orderStatus) }}
                   </span>
                 </td>
                 <td>
+                  <button class="btn btn-info btn-sm" @click="handleView(order)">
+                    查看详情
+                  </button>
                   <button class="btn btn-secondary btn-sm" @click="handleEdit(order)">
                     编辑
                   </button>
                   <button class="btn btn-danger btn-sm" @click="handleDelete(order.id)">
                     删除
                   </button>
-                  <button class="btn btn-primary btn-sm" @click="handleStatus(order.id, order.orderStatus)">
+                  <button class="btn btn-primary btn-sm" @click="handleStatus(order.id, order.orderStatus)" v-if="order.orderStatus !== 4 && order.orderStatus !== 5">
                     更新状态
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 查看详情对话框 -->
+    <div v-if="showViewModal" class="modal-overlay" @click.self="showViewModal = false">
+      <div class="modal modal-large">
+        <div class="modal-header">
+          <h3>订单详情</h3>
+          <button class="modal-close" @click="showViewModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="currentOrder" class="order-detail">
+            <div class="detail-section">
+              <h4>基本信息</h4>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">订单ID：</span>
+                  <span class="detail-value">{{ currentOrder.id }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">订单号：</span>
+                  <span class="detail-value">{{ currentOrder.orderUuid }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">订单金额：</span>
+                  <span class="detail-value">¥{{ currentOrder.price }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">订单状态：</span>
+                  <span class="detail-value">{{ getStatusText(currentOrder.orderStatus) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">创建时间：</span>
+                  <span class="detail-value">{{ formatDate(currentOrder.createTime) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">更新时间：</span>
+                  <span class="detail-value">{{ formatDate(currentOrder.updateTime) }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="detail-section">
+              <h4>宠物信息</h4>
+              <div class="pet-info-full">
+                <div class="pet-image" v-if="currentOrder.petImageUrl">
+                  <img :src="'http://localhost:8080/wangshangchongwudian/' + currentOrder.petImageUrl" :alt="currentOrder.petName">
+                </div>
+                <div class="pet-details">
+                  <h5>{{ currentOrder.petName }}</h5>
+                  <p>性别：{{ currentOrder.petGender || '-' }}</p>
+                  <p>年龄：{{ currentOrder.petAge || '-' }}</p>
+                  <p>描述：{{ currentOrder.petDescription || '-' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="detail-section" v-if="currentOrder.paymentType">
+              <h4>支付信息</h4>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">支付方式：</span>
+                  <span class="detail-value">{{ currentOrder.paymentTypeText || '-' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showViewModal = false">关闭</button>
         </div>
       </div>
     </div>
@@ -91,11 +170,11 @@
               <div class="form-group">
                 <label for="orderStatus">订单状态</label>
                 <select id="orderStatus" v-model="formData.orderStatus">
-                  <option value="0">待支付</option>
-                  <option value="1">已支付</option>
-                  <option value="2">已发货</option>
-                  <option value="3">已完成</option>
-                  <option value="4">已取消</option>
+                  <option value="1">待付款</option>
+                  <option value="2">待发货</option>
+                  <option value="3">已发货</option>
+                  <option value="4">已完成</option>
+                  <option value="5">已取消</option>
                 </select>
               </div>
             </div>
@@ -125,6 +204,8 @@ export default {
     return {
       orders: [],
       showModal: false,
+      showViewModal: false,
+      currentOrder: null,
       filterForm: {
         orderUuid: '',
         userName: '',
@@ -132,7 +213,7 @@ export default {
       },
       formData: {
         id: null,
-        orderStatus: 0,
+        orderStatus: 1,
         remark: ''
       }
     }
@@ -145,7 +226,6 @@ export default {
       try {
         const params = {}
         
-        // Add filter parameters if they have values
         if (this.filterForm.orderUuid) {
           params.orderUuid = this.filterForm.orderUuid
         }
@@ -175,23 +255,27 @@ export default {
     },
     getStatusText(status) {
       const statusMap = {
-        0: '待支付',
-        1: '已支付',
-        2: '已发货',
-        3: '已完成',
-        4: '已取消'
+        1: '待付款',
+        2: '待发货',
+        3: '已发货',
+        4: '已完成',
+        5: '已取消'
       }
       return statusMap[status] || '未知状态'
     },
     getStatusClass(status) {
       const classMap = {
-        0: 'status-warning',
-        1: 'status-info',
-        2: 'status-primary',
-        3: 'status-active',
-        4: 'status-inactive'
+        1: 'status-warning',
+        2: 'status-info',
+        3: 'status-primary',
+        4: 'status-active',
+        5: 'status-inactive'
       }
       return classMap[status] || 'status-inactive'
+    },
+    handleView(order) {
+      this.currentOrder = order
+      this.showViewModal = true
     },
     handleEdit(order) {
       this.formData = {
@@ -221,17 +305,16 @@ export default {
       }
     },
     handleStatus(id, currentStatus) {
-      // 简单的状态流转
       let newStatus = currentStatus
       switch (currentStatus) {
-        case 0: // 待支付
-          newStatus = 1 // 已支付
+        case 1: 
+          newStatus = 2 
           break
-        case 1: // 已支付
-          newStatus = 2 // 已发货
+        case 2: 
+          newStatus = 3 
           break
-        case 2: // 已发货
-          newStatus = 3 // 已完成
+        case 3: 
+          newStatus = 4 
           break
         default:
           return
@@ -245,6 +328,11 @@ export default {
       } catch (error) {
         console.error('更新状态失败:', error)
       }
+    },
+    formatDate(dateString) {
+      if (!dateString) return '-'
+      const date = new Date(dateString)
+      return date.toLocaleString()
     }
   }
 }
@@ -255,7 +343,6 @@ export default {
   padding: 0;
 }
 
-/* 主卡片容器 */
 .card {
   background-color: var(--card);
   border-radius: var(--radius-base);
@@ -267,7 +354,6 @@ export default {
   padding: 24px;
 }
 
-/* 筛选区域样式 */
 .filter-section {
   margin-bottom: 24px;
   background-color: white;
@@ -326,7 +412,6 @@ export default {
   padding: 12px 20px;
 }
 
-/* 表格容器 */
 .table-container {
   overflow-x: auto;
   margin-bottom: 24px;
@@ -368,7 +453,20 @@ export default {
   transition: background-color 0.2s ease;
 }
 
-/* 按钮样式增强 */
+.pet-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pet-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -443,7 +541,6 @@ export default {
   margin-right: 8px;
 }
 
-/* 弹窗样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -469,6 +566,10 @@ export default {
   animation: modalSlideIn 0.3s ease-out;
   display: flex;
   flex-direction: column;
+}
+
+.modal-large {
+  max-width: 800px;
 }
 
 @keyframes modalSlideIn {
@@ -578,7 +679,6 @@ export default {
   background-color: var(--bg);
 }
 
-/* 状态标签样式 */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
@@ -613,4 +713,93 @@ export default {
   background-color: rgba(66, 184, 131, 0.1);
   color: var(--primary);
 }
+
+.order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-section {
+  background-color: var(--card);
+  border-radius: var(--radius-base);
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.detail-section h4 {
+  margin: 0 0 16px 0;
+  color: var(--text-1);
+  font-size: 16px;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-1);
+  font-weight: 400;
+}
+
+.pet-info-full {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.pet-info-full .pet-image {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.pet-info-full .pet-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pet-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pet-details h5 {
+  margin: 0 0 8px 0;
+  color: var(--text-1);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pet-details p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
 </style>
+

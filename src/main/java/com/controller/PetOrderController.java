@@ -80,6 +80,14 @@ public class PetOrderController {
         CommonUtil.checkMap(params);
         PageUtils page = petOrderService.queryPage(params);
 
+        // 将实体转换为VO，包含完整信息
+        List<PetOrderEntity> entityList = (List<PetOrderEntity>) page.getList();
+        List<PetOrderVO> voList = new ArrayList<>();
+        for (PetOrderEntity entity : entityList) {
+            voList.add(new PetOrderVO(entity));
+        }
+        page.setList(voList);
+
         return R.ok().put("data", page);
     }
 
