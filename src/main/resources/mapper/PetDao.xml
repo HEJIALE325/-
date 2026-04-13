@@ -24,9 +24,6 @@
             <if test=" params.gender != '' and params.gender != null and params.gender != 'null' ">
                 and p.gender = #{params.gender}
             </if>
-            <if test=" params.breed != '' and params.breed != null and params.breed != 'null' ">
-                and p.breed like CONCAT('%',#{params.breed},'%')
-            </if>
             <if test="params.status != null and params.status != ''">
                 and p.status = #{params.status}
             </if>

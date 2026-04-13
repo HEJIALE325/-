@@ -44,11 +44,6 @@ public class PetVO implements Serializable {
     private String age;
 
     /**
-     * 品种
-     */
-    private String breed;
-
-    /**
      * 价格
      */
     private Double price;
@@ -92,7 +87,6 @@ public class PetVO implements Serializable {
         this.categoryId = entity.getCategoryId();
         this.gender = entity.getGender();
         this.age = entity.getAge();
-        this.breed = entity.getBreed();
         this.price = entity.getPrice();
         this.description = entity.getDescription();
         this.imageUrl = entity.getImageUrl();
@@ -155,19 +149,9 @@ public class PetVO implements Serializable {
     public void setAge(String age) {
         this.age = age;
     }
-
-    public String getBreed() {
-        return breed;
-    }
-
-    public void setBreed(String breed) {
-        this.breed = breed;
-    }
-
     public Double getPrice() {
         return price;
     }
-
     public void setPrice(Double price) {
         this.price = price;
     }

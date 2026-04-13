@@ -95,15 +95,6 @@ public class PetEntity<T> implements Serializable {
 
 
     /**
-     * 品种
-     */
-    @ColumnInfo(comment="品种",type="varchar(100)")
-    @TableField(value = "breed")
-
-    private String breed;
-
-
-    /**
      * 价格
      */
     @ColumnInfo(comment="价格",type="decimal(10,2)")
@@ -237,19 +228,6 @@ public class PetEntity<T> implements Serializable {
         this.age = age;
     }
     /**
-	 * 获取：品种
-	 */
-    public String getBreed() {
-        return breed;
-    }
-    /**
-	 * 设置：品种
-	 */
-
-    public void setBreed(String breed) {
-        this.breed = breed;
-    }
-    /**
 	 * 获取：价格
 	 */
     public Double getPrice() {
@@ -336,7 +314,6 @@ public class PetEntity<T> implements Serializable {
             ", categoryId=" + categoryId +
             ", gender=" + gender +
             ", age=" + age +
-            ", breed=" + breed +
             ", price=" + price +
             ", description=" + description +
             ", imageUrl=" + imageUrl +
