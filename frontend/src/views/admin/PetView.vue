@@ -15,6 +15,7 @@
             <thead>
               <tr>
                 <th>宠物ID</th>
+                <th>图片</th>
                 <th>宠物名称</th>
                 <th>分类</th>
                 <th>价格</th>
@@ -25,6 +26,12 @@
             <tbody>
               <tr v-for="pet in pets" :key="pet.id">
                 <td>{{ pet.id }}</td>
+                <td>
+                  <div class="pet-image-small">
+                    <img v-if="pet.imageUrl" :src="getImageUrl(pet.imageUrl)" alt="宠物图片">
+                    <div v-else class="no-image">无图片</div>
+                  </div>
+                </td>
                 <td>{{ pet.name }}</td>
                 <td>{{ pet.categoryName }}</td>
                 <td>{{ pet.price }}</td>
@@ -117,6 +124,21 @@
                 <textarea id="description" v-model="formData.description" rows="4"></textarea>
               </div>
             </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="imageUrl">宠物图片</label>
+                <div class="upload-container">
+                  <input type="file" ref="fileInput" @change="handleImageUpload" style="display: none;" accept="image/*">
+                  <div v-if="formData.imageUrl" class="image-preview">
+                    <img :src="getImageUrl(formData.imageUrl)" alt="宠物图片">
+                    <button class="btn btn-danger btn-sm" @click="formData.imageUrl = ''">删除</button>
+                  </div>
+                  <button v-else class="btn btn-secondary" @click="$refs.fileInput.click()">
+                    选择图片
+                  </button>
+                </div>
+              </div>
+            </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" @click="showModal = false">取消</button>
               <button type="submit" class="btn btn-primary">保存</button>
@@ -129,7 +151,7 @@
 </template>
 
 <script>
-import { petApi, petCategoryApi } from '../../utils/api'
+import { petApi, petCategoryApi, fileApi } from '../../utils/api'
 
 export default {
   name: 'PetView',
@@ -147,6 +169,7 @@ export default {
         categoryId: '',
         price: 0,
         description: '',
+        imageUrl: '',
         status: 1
       }
     }
@@ -158,7 +181,7 @@ export default {
   methods: {
     async fetchPets() {
       try {
-        const response = await petApi.getList()
+        const response = await petApi.getPage({ page: 1, limit: 100 })
         this.pets = response.data.list
       } catch (error) {
         console.error('获取宠物列表失败:', error)
@@ -207,7 +230,10 @@ export default {
     },
     handleEdit(pet) {
       this.isEdit = true
-      this.formData = { ...pet }
+      this.formData = { 
+        ...pet,
+        imageUrl: pet.imageUrl || ''
+      }
       this.showModal = true
     },
     async handleSubmit() {
@@ -260,6 +286,25 @@ export default {
     },
     closeCategoryTree() {
       this.showCategoryTree = false
+    },
+    async handleImageUpload(e) {
+      const file = e.target.files[0]
+      if (!file) return
+      
+      try {
+        const response = await fileApi.upload('1', file)
+        if (response.code === 200) {
+          this.formData.imageUrl = response.file
+        } else {
+          alert('上传失败：' + response.msg)
+        }
+      } catch (error) {
+        console.error('图片上传失败:', error)
+        alert('上传失败，请重试')
+      }
+    },
+    getImageUrl(imageUrl) {
+      return imageUrl ? `/static/upload/${imageUrl}` : ''
     }
   }
 }
@@ -635,5 +680,64 @@ export default {
 
 .tree-node-children {
   margin-left: 16px;
+}
+
+/* 图片上传样式 */
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  background-color: white;
+}
+
+.image-preview img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius-base);
+}
+
+.upload-container button {
+  align-self: flex-start;
+}
+
+/* 宠物列表图片样式 */
+.pet-image-small {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
+
+.pet-image-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+  padding: 4px;
 }
 </style>
