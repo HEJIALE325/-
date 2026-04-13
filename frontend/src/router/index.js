@@ -216,6 +216,24 @@ const router = createRouter({
           path: 'chongwuyongpin-order',
           name: 'admin-chongwuyongpin-order',
           component: () => import('../views/admin/ChongwuyongpinOrderView.vue')
+        },
+        // 宠物分类管理
+        {
+          path: 'pet-category',
+          name: 'admin-pet-category',
+          component: () => import('../views/admin/PetCategoryView.vue')
+        },
+        // 宠物管理
+        {
+          path: 'pet',
+          name: 'admin-pet',
+          component: () => import('../views/admin/PetView.vue')
+        },
+        // 宠物订单管理
+        {
+          path: 'pet-order',
+          name: 'admin-pet-order',
+          component: () => import('../views/admin/PetOrderView.vue')
         }
       ]
     }

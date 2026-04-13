@@ -166,6 +166,25 @@
               </li>
             </ul>
           </li>
+          
+          <!-- 宠物管理（菜单） -->
+          <li class="menu-item" :class="{ active: $route.path.includes('/admin/pet'), open: openMenus['pet'] }">
+            <div class="menu-link" @click="toggleMenu('pet')">
+              <span>宠物管理</span>
+              <i class="menu-arrow">▼</i>
+            </div>
+            <ul class="submenu" v-if="openMenus['pet']">
+              <li class="submenu-item" :class="{ active: $route.name === 'admin-pet-category' }">
+                <router-link to="/admin/pet-category" @click="handleSubmenuClick('pet')">宠物分类管理</router-link>
+              </li>
+              <li class="submenu-item" :class="{ active: $route.name === 'admin-pet' }">
+                <router-link to="/admin/pet" @click="handleSubmenuClick('pet')">宠物列表</router-link>
+              </li>
+              <li class="submenu-item" :class="{ active: $route.name === 'admin-pet-order' }">
+                <router-link to="/admin/pet-order" @click="handleSubmenuClick('pet')">宠物订单管理</router-link>
+              </li>
+            </ul>
+          </li>
         </ul>
       </nav>
     </aside>
@@ -224,7 +243,8 @@ const openMenus = ref({
   'jichushuju': false,
   'luntan': false,
   'gonggao': false,
-  'lunbotu': false
+  'lunbotu': false,
+  'pet': false
 })
 
 // 切换子菜单展开状态
@@ -276,6 +296,8 @@ const initMenuOpenState = () => {
     openMenus.value['gonggao'] = true
   } else if (path.includes('/admin/lunbotu')) {
     openMenus.value['lunbotu'] = true
+  } else if (path.includes('/admin/pet')) {
+    openMenus.value['pet'] = true
   }
 }
 
