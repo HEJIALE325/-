@@ -246,6 +246,54 @@ const menu = {
                 ],
                 "menu":"轮播图信息"
             }
+            ,{
+                "child":[
+                    {
+                        "buttons":[
+                            "查看",
+                            "新增",
+                            "修改",
+                            "删除"
+                        ],
+                        "menu":"宠物分类管理",
+                        "menuJump":"列表",
+                        "tableName":"petCategory"
+                    }
+                ],
+                "menu":"宠物分类管理"
+            }
+            ,{
+                "child":[
+                    {
+                        "buttons":[
+                            "查看",
+                            "新增",
+                            "修改",
+                            "删除"
+                        ],
+                        "menu":"宠物管理",
+                        "menuJump":"列表",
+                        "tableName":"pet"
+                    }
+                ],
+                "menu":"宠物管理"
+            }
+            ,{
+                "child":[
+                    {
+                        "buttons":[
+                            "查看",
+                            "新增",
+                            "修改",
+                            "删除"
+                        ],
+                        "menu":"宠物订单管理",
+                        "menuJump":"列表",
+                        "tableName":"petOrder"
+                    }
+                ],
+                "menu":"宠物订单管理"
+            }
             /*,{
 			    "child":[
 			        {
