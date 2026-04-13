@@ -10,6 +10,39 @@
           </button>
         </div>
         
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+          <form @submit.prevent="handleFilter">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="filter-name">宠物名称</label>
+                <input type="text" id="filter-name" v-model="filterForm.name" placeholder="请输入宠物名称">
+              </div>
+              <div class="form-group">
+                <label for="filter-category">分类</label>
+                <select id="filter-category" v-model="filterForm.categoryId">
+                  <option value="">全部分类</option>
+                  <option v-for="category in categories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="filter-status">状态</label>
+                <select id="filter-status" v-model="filterForm.status">
+                  <option value="">全部状态</option>
+                  <option value="1">上架</option>
+                  <option value="0">下架</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">筛选</button>
+                <button type="button" class="btn btn-secondary" @click="resetFilter">重置</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        
         <div class="table-container">
           <table class="admin-table">
             <thead>
@@ -131,9 +164,9 @@
                   <input type="file" ref="fileInput" @change="handleImageUpload" style="display: none;" accept="image/*">
                   <div v-if="formData.imageUrl" class="image-preview">
                     <img :src="getImageUrl(formData.imageUrl)" alt="宠物图片">
-                    <button class="btn btn-danger btn-sm" @click="formData.imageUrl = ''">删除</button>
+                    <button class="btn btn-danger btn-sm" @click.stop.prevent="formData.imageUrl = ''">删除</button>
                   </div>
-                  <button v-else class="btn btn-secondary" @click="$refs.fileInput.click()">
+                  <button v-else class="btn btn-secondary" @click.stop.prevent="$refs.fileInput.click()">
                     选择图片
                   </button>
                 </div>
@@ -163,6 +196,11 @@ export default {
       showModal: false,
       isEdit: false,
       showCategoryTree: false,
+      filterForm: {
+        name: '',
+        categoryId: '',
+        status: ''
+      },
       formData: {
         id: null,
         name: '',
@@ -175,17 +213,50 @@ export default {
     }
   },
   mounted() {
-    this.fetchPets()
-    this.fetchCategories()
+    this.fetchCategories().then(() => {
+      this.fetchPets()
+    })
   },
   methods: {
     async fetchPets() {
       try {
-        const response = await petApi.getPage({ page: 1, limit: 100 })
-        this.pets = response.data.list
+        const params = {
+          page: 1,
+          limit: 100
+        }
+        
+        // Add filter parameters if they have values
+        if (this.filterForm.name) {
+          params.name = this.filterForm.name
+        }
+        if (this.filterForm.categoryId) {
+          params.categoryId = this.filterForm.categoryId
+        }
+        if (this.filterForm.status !== '') {
+          params.status = this.filterForm.status
+        }
+        
+        const response = await petApi.getPage(params)
+        const pets = response.data.list
+        // Map category IDs to category names
+        this.pets = pets.map(pet => ({
+          ...pet,
+          categoryName: this.getCategoryName(pet.categoryId)
+        }))
       } catch (error) {
         console.error('获取宠物列表失败:', error)
       }
+    },
+    handleFilter() {
+      this.fetchPets()
+    },
+    resetFilter() {
+      this.filterForm = {
+        name: '',
+        categoryId: '',
+        status: ''
+      }
+      this.fetchPets()
     },
     async fetchCategories() {
       try {
@@ -245,6 +316,7 @@ export default {
           await petApi.save(this.formData)
         }
         this.showModal = false
+        await this.fetchCategories()
         this.fetchPets()
       } catch (error) {
         console.error('保存宠物失败:', error)
@@ -254,6 +326,7 @@ export default {
       if (confirm('确定要删除这个宠物吗？')) {
         try {
           await petApi.delete([id])
+          await this.fetchCategories()
           this.fetchPets()
         } catch (error) {
           console.error('删除宠物失败:', error)
@@ -263,6 +336,7 @@ export default {
     async handleStatus(id, status) {
       try {
         await petApi.update({ id, status })
+        await this.fetchCategories()
         this.fetchPets()
       } catch (error) {
         console.error('更新状态失败:', error)
@@ -294,8 +368,8 @@ export default {
       
       try {
         const response = await fileApi.upload('1', file)
-        if (response.code === 200) {
-          this.formData.imageUrl = response.file
+        if (response.code === 0) {
+          this.formData.imageUrl = 'upload/' + response.file
         } else {
           alert('上传失败：' + response.msg)
         }
@@ -305,7 +379,7 @@ export default {
       }
     },
     getImageUrl(imageUrl) {
-      return imageUrl ? `/static/upload/${imageUrl}` : ''
+      return imageUrl ? `http://localhost:8080/wangshangchongwudian/${imageUrl}` : ''
     }
   }
 }
@@ -334,6 +408,65 @@ export default {
   display: flex;
   justify-content: flex-start;
   gap: 12px;
+}
+
+/* 筛选区域样式 */
+.filter-section {
+  margin-bottom: 24px;
+  background-color: white;
+  padding: 20px;
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.filter-section .form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-section .form-group {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.filter-section .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-1);
+  font-size: 14px;
+}
+
+.filter-section .form-group input,
+.filter-section .form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.filter-section .form-group input:focus,
+.filter-section .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.filter-section .form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.filter-section .form-actions .btn {
+  padding: 12px 20px;
 }
 
 /* 表格容器 */

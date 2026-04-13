@@ -4,6 +4,37 @@
       <div class="card-body">
         <h2>宠物订单管理</h2>
         
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+          <form @submit.prevent="handleFilter">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="filter-orderUuid">订单号</label>
+                <input type="text" id="filter-orderUuid" v-model="filterForm.orderUuid" placeholder="请输入订单号">
+              </div>
+              <div class="form-group">
+                <label for="filter-userName">用户</label>
+                <input type="text" id="filter-userName" v-model="filterForm.userName" placeholder="请输入用户名">
+              </div>
+              <div class="form-group">
+                <label for="filter-orderStatus">状态</label>
+                <select id="filter-orderStatus" v-model="filterForm.orderStatus">
+                  <option value="">全部状态</option>
+                  <option value="0">待支付</option>
+                  <option value="1">已支付</option>
+                  <option value="2">已发货</option>
+                  <option value="3">已完成</option>
+                  <option value="4">已取消</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">筛选</button>
+                <button type="button" class="btn btn-secondary" @click="resetFilter">重置</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        
         <div class="table-container">
           <table class="admin-table">
             <thead>
@@ -94,6 +125,11 @@ export default {
     return {
       orders: [],
       showModal: false,
+      filterForm: {
+        orderUuid: '',
+        userName: '',
+        orderStatus: ''
+      },
       formData: {
         id: null,
         orderStatus: 0,
@@ -107,11 +143,35 @@ export default {
   methods: {
     async fetchOrders() {
       try {
-        const response = await petOrderApi.getList()
-        this.orders = response.data.data
+        const params = {}
+        
+        // Add filter parameters if they have values
+        if (this.filterForm.orderUuid) {
+          params.orderUuid = this.filterForm.orderUuid
+        }
+        if (this.filterForm.userName) {
+          params.userName = this.filterForm.userName
+        }
+        if (this.filterForm.orderStatus !== '') {
+          params.orderStatus = this.filterForm.orderStatus
+        }
+        
+        const response = await petOrderApi.getList(params)
+        this.orders = response.data.list
       } catch (error) {
         console.error('获取订单列表失败:', error)
       }
+    },
+    handleFilter() {
+      this.fetchOrders()
+    },
+    resetFilter() {
+      this.filterForm = {
+        orderUuid: '',
+        userName: '',
+        orderStatus: ''
+      }
+      this.fetchOrders()
     },
     getStatusText(status) {
       const statusMap = {
@@ -205,6 +265,65 @@ export default {
 
 .card-body {
   padding: 24px;
+}
+
+/* 筛选区域样式 */
+.filter-section {
+  margin-bottom: 24px;
+  background-color: white;
+  padding: 20px;
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.filter-section .form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-section .form-group {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.filter-section .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-1);
+  font-size: 14px;
+}
+
+.filter-section .form-group input,
+.filter-section .form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.filter-section .form-group input:focus,
+.filter-section .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+.filter-section .form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.filter-section .form-actions .btn {
+  padding: 12px 20px;
 }
 
 /* 表格容器 */

@@ -111,6 +111,57 @@
         </div>
       </section>
       
+      <!-- 可爱宠物 -->
+      <section class="featured-pets">
+        <div class="container">
+          <div class="section-header">
+            <h2>可爱宠物</h2>
+            <router-link to="/pets" class="view-all">查看全部</router-link>
+          </div>
+          
+          <!-- 加载状态 -->
+          <div v-if="loading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+          
+          <!-- 错误提示 -->
+          <div v-else-if="error" class="error-container">
+            <p>{{ error }}</p>
+            <button class="btn btn-primary" @click="fetchPets">重新加载</button>
+          </div>
+          
+          <!-- 宠物列表 -->
+          <div v-else class="pets-grid">
+            <div v-for="pet in pets" :key="pet.id">
+              <router-link :to="`/pet/${pet.id}`" class="pet-card-link">
+                <div class="pet-card">
+                  <!-- 宠物图片 -->
+                  <div class="pet-image">
+                    <img :src="pet.imageUrl ? 'http://localhost:8080/wangshangchongwudian/' + pet.imageUrl : 'https://via.placeholder.com/300x300'" :alt="pet.name">
+                  </div>
+                  
+                  <!-- 宠物信息 -->
+                  <div class="pet-info">
+                    <h3 class="pet-title">{{ pet.name }}</h3>
+                    <p class="pet-breed">{{ pet.breed }}</p>
+                    <p class="pet-desc">{{ pet.description || '可爱的宠物，期待您的领养' }}</p>
+                    <div class="pet-price-row">
+                      <span class="pet-price">¥{{ pet.price }}</span>
+                    </div>
+                  </div>
+                </div>
+              </router-link>
+            </div>
+            
+            <!-- 无宠物时的提示 -->
+            <div v-if="pets.length === 0" class="empty-container">
+              <p>暂无宠物</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       <!-- 最新资讯 -->
       <section class="latest-news">
         <div class="container">
@@ -153,7 +204,7 @@
 import { ref, onMounted } from 'vue'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
-import { chongwuyongpinApi, newsApi, configApi, dictionaryApi } from '../../utils/api'
+import { chongwuyongpinApi, newsApi, configApi, dictionaryApi, petApi } from '../../utils/api'
 
 // 状态管理
 const products = ref([])
@@ -162,6 +213,7 @@ const loading = ref(false)
 const error = ref(null)
 const banners = ref([])
 const categories = ref([])
+const pets = ref([])
 
 // 当前轮播图索引
 const currentBanner = ref(0)
@@ -263,6 +315,25 @@ const fetchCategories = async () => {
   }
 }
 
+// 获取宠物列表
+const fetchPets = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await petApi.getPage({ page: 1, limit: 6 })
+    if (response.code === 0) {
+      pets.value = response.data.list || []
+    } else {
+      error.value = '获取宠物列表失败'
+    }
+  } catch (err) {
+    error.value = '获取宠物列表失败'
+    console.error('获取宠物列表失败:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
 // 轮播图自动切换
 const startBannerSlider = () => {
   setInterval(() => {
@@ -276,6 +347,7 @@ onMounted(() => {
   fetchCategories()
   fetchProducts()
   fetchNews()
+  fetchPets()
   startBannerSlider()
 })
 </script>
@@ -648,6 +720,104 @@ onMounted(() => {
   text-decoration: line-through;
 }
 
+/* 宠物卡片 */
+.featured-pets {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.pets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.pet-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.pet-card {
+  background: var(--card);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.pet-card-link:hover .pet-card {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.pet-image {
+  position: relative;
+  padding-top: 100%; /* 1:1 比例 */
+  overflow: hidden;
+}
+
+.pet-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.pet-card:hover .pet-image img {
+  transform: scale(1.05);
+}
+
+.pet-info {
+  padding: var(--spacing-base);
+}
+
+.pet-title {
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--text-1);
+  margin-bottom: var(--spacing-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-breed {
+  font-size: var(--fs-xs);
+  color: var(--primary);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+}
+
+.pet-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-bottom: var(--spacing-base);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-price-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-base);
+}
+
+.pet-price {
+  color: var(--danger);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
 /* 资讯卡片 */
 .latest-news {
   margin-bottom: var(--spacing-2xl);
@@ -783,11 +953,25 @@ onMounted(() => {
     gap: var(--spacing-base);
   }
   
+  /* 宠物网格适配 */
+  .pets-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-base);
+  }
+  
   .product-card {
     font-size: var(--fs-sm);
   }
   
+  .pet-card {
+    font-size: var(--fs-sm);
+  }
+  
   .product-info {
+    padding: var(--spacing-sm);
+  }
+  
+  .pet-info {
     padding: var(--spacing-sm);
   }
   
@@ -822,6 +1006,10 @@ onMounted(() => {
     grid-template-columns: repeat(3, 1fr);
   }
   
+  .pets-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
   .news-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -834,6 +1022,10 @@ onMounted(() => {
   }
   
   .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .pets-grid {
     grid-template-columns: repeat(4, 1fr);
   }
   
