@@ -13,6 +13,7 @@
           >
             <div class="banner-image">
               <img :src="banner.image" :alt="banner.title">
+              <div class="banner-overlay"></div>
             </div>
             <div class="banner-content">
               <h2>{{ banner.title }}</h2>
@@ -20,6 +21,9 @@
               <div class="banner-actions">
                 <router-link to="/products" class="btn btn-primary">
                   立即选购 🐾
+                </router-link>
+                <router-link to="/pets" class="btn btn-secondary">
+                  领养宠物
                 </router-link>
               </div>
             </div>
@@ -34,22 +38,31 @@
               @click="currentBanner = index"
             ></span>
           </div>
+          <!-- 轮播控制按钮 -->
+          <button class="slider-btn slider-btn-prev" @click="prevBanner">
+            <span>&lt;</span>
+          </button>
+          <button class="slider-btn slider-btn-next" @click="nextBanner">
+            <span>&gt;</span>
+          </button>
         </div>
       </section>
       
       <!-- 分类导航 -->
       <section class="category-nav">
         <div class="container">
+          <div class="section-header">
+            <h2>分类导航</h2>
+          </div>
           <div class="categories">
             <router-link 
               v-for="category in categories" 
               :key="category.codeIndex"
               :to="category.codeIndex === '5' ? '/chongwujiyang' : `/products?category=${category.codeIndex}`" 
               class="category-item"
-              :class="category.codeIndex"
             >
-              <span class="category-icon">{{ category.icon || '�' }}</span>
-              <span class="category-text">{{ category.indexName }}</span>
+              <div class="category-icon">{{ category.icon || '�' }}</div>
+              <div class="category-text">{{ category.indexName }}</div>
             </router-link>
           </div>
         </div>
@@ -87,7 +100,10 @@
                   
                   <!-- 商品图片 -->
                   <div class="product-image">
-                    <img :src="product.chongwuyongpinPhoto ? 'http://localhost:8080/wangshangchongwudian/' + product.chongwuyongpinPhoto : 'https://via.placeholder.com/300x300'" :alt="product.chongwuyongpinName">
+                    <img :src="getImageUrl(product.chongwuyongpinPhoto)" :alt="product.chongwuyongpinName">
+                    <div class="product-image-overlay">
+                      <button class="btn btn-secondary btn-sm">查看详情</button>
+                    </div>
                   </div>
                   
                   <!-- 商品信息 -->
@@ -138,16 +154,22 @@
                 <div class="pet-card">
                   <!-- 宠物图片 -->
                   <div class="pet-image">
-                    <img :src="pet.imageUrl ? 'http://localhost:8080/wangshangchongwudian/' + pet.imageUrl : 'https://via.placeholder.com/300x300'" :alt="pet.name">
+                    <img :src="getImageUrl(pet.imageUrl)" :alt="pet.name">
+                    <div class="pet-image-overlay">
+                      <button class="btn btn-secondary btn-sm">查看详情</button>
+                    </div>
                   </div>
                   
                   <!-- 宠物信息 -->
                   <div class="pet-info">
-                    <h3 class="pet-title">{{ pet.name }}</h3>
-                    <p class="pet-breed">{{ pet.breed }}</p>
+                    <div class="pet-header">
+                      <h3 class="pet-title">{{ pet.name }}</h3>
+                      <span class="pet-breed">{{ pet.breed }}</span>
+                    </div>
                     <p class="pet-desc">{{ pet.description || '可爱的宠物，期待您的领养' }}</p>
                     <div class="pet-price-row">
                       <span class="pet-price">¥{{ pet.price }}</span>
+                      <button class="btn btn-primary btn-sm">立即领养</button>
                     </div>
                   </div>
                 </div>
@@ -175,13 +197,15 @@
               <router-link :to="`/news/detail/${item.id}`" class="news-card-link">
                 <div class="news-card">
                   <div class="news-image">
-                    <img :src="item.newsPhoto ? 'http://localhost:8080/wangshangchongwudian/' + item.newsPhoto : 'https://via.placeholder.com/400x200'" :alt="item.newsTitle">
+                    <img :src="getImageUrl(item.newsPhoto)" :alt="item.newsTitle">
+                    <div class="news-image-overlay"></div>
                   </div>
                   <div class="news-content">
                     <h3 class="news-title">{{ item.newsTitle }}</h3>
                     <p class="news-desc">{{ item.newsContent || '这里是资讯内容摘要，为您提供专业的宠物护理建议和知识...' }}</p>
                     <div class="news-meta">
                       <span class="news-time">{{ item.insertTime || '2026-03-27' }}</span>
+                      <span class="news-read-more">阅读更多 →</span>
                     </div>
                   </div>
                 </div>
@@ -191,6 +215,42 @@
             <!-- 无新闻时的提示 -->
             <div v-if="news.length === 0" class="empty-container">
               <p>暂无资讯</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- 服务保障 -->
+      <section class="service-guarantee">
+        <div class="container">
+          <div class="service-items">
+            <div class="service-item">
+              <div class="service-icon">🛒</div>
+              <div class="service-content">
+                <h4>正品保障</h4>
+                <p>所有商品均为正品，品质保证</p>
+              </div>
+            </div>
+            <div class="service-item">
+              <div class="service-icon">🚚</div>
+              <div class="service-content">
+                <h4>闪电发货</h4>
+                <p>24小时内发货，快速送达</p>
+              </div>
+            </div>
+            <div class="service-item">
+              <div class="service-icon">💝</div>
+              <div class="service-content">
+                <h4>7天无理由</h4>
+                <p>不满意可退货，购物无忧</p>
+              </div>
+            </div>
+            <div class="service-item">
+              <div class="service-icon">📞</div>
+              <div class="service-content">
+                <h4>专业客服</h4>
+                <p>24小时在线，随时解答</p>
+              </div>
             </div>
           </div>
         </div>
@@ -217,6 +277,27 @@ const pets = ref([])
 
 // 当前轮播图索引
 const currentBanner = ref(0)
+
+// 获取图片URL
+const getImageUrl = (imagePath) => {
+  if (!imagePath) {
+    return 'https://via.placeholder.com/300x300'
+  }
+  // 检查是否已经是完整的URL
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+  return `http://localhost:8080/wangshangchongwudian/${imagePath}`
+}
+
+// 轮播图控制函数
+const prevBanner = () => {
+  currentBanner.value = (currentBanner.value - 1 + banners.value.length) % banners.value.length
+}
+
+const nextBanner = () => {
+  currentBanner.value = (currentBanner.value + 1) % banners.value.length
+}
 
 // 获取商品列表
 const fetchProducts = async () => {
@@ -266,7 +347,7 @@ const fetchBanners = async () => {
         id: item.id,
         title: item.name,
         subtitle: '',
-        image: `http://localhost:8080/wangshangchongwudian/${item.value}`
+        image: getImageUrl(item.value)
       }))
     }
   } catch (err) {
@@ -390,12 +471,28 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 .banner-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.banner-slide:hover .banner-image img {
+  transform: scale(1.05);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4));
+  z-index: 1;
 }
 
 .banner-content {
@@ -416,6 +513,7 @@ onMounted(() => {
   margin-bottom: var(--spacing-base);
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.8s ease-out;
 }
 
 .banner-content p {
@@ -423,6 +521,14 @@ onMounted(() => {
   margin-bottom: var(--spacing-xl);
   opacity: 0.9;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.banner-actions {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
 }
 
 .banner-actions .btn {
@@ -430,6 +536,45 @@ onMounted(() => {
   padding: var(--spacing-base) var(--spacing-2xl);
   border-radius: var(--radius-full);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.banner-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 轮播控制按钮 */
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: all 0.3s ease;
+  font-size: 24px;
+  color: var(--text-1);
+}
+
+.slider-btn:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-btn-prev {
+  left: var(--spacing-xl);
+}
+
+.slider-btn-next {
+  right: var(--spacing-xl);
 }
 
 /* 轮播指示器 */
@@ -482,6 +627,17 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 错误提示 */
 .error-container {
   display: flex;
@@ -520,12 +676,17 @@ onMounted(() => {
 /* 分类导航 */
 .category-nav {
   margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl) 0;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .categories {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--spacing-base);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
 }
 
 .category-item {
@@ -534,11 +695,25 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
-  background: var(--card);
+  background: var(--bg);
   border-radius: var(--radius-base);
   text-decoration: none;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.category-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
 }
 
 .category-item:hover {
@@ -546,31 +721,25 @@ onMounted(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
+.category-item:hover::before {
+  transform: scaleX(1);
+}
+
 .category-icon {
-  font-size: 32px;
+  font-size: 40px;
   margin-bottom: var(--spacing-sm);
+  transition: transform 0.3s ease;
+}
+
+.category-item:hover .category-icon {
+  transform: scale(1.1);
 }
 
 .category-text {
   color: var(--text-1);
   font-weight: 500;
   font-size: var(--fs-sm);
-}
-
-.category-item.dog {
-  border: 2px solid var(--dog);
-}
-
-.category-item.cat {
-  border: 2px solid var(--cat);
-}
-
-.category-item.small-pet {
-  border: 2px solid var(--small-pet);
-}
-
-.category-item.fish {
-  border: 2px solid var(--fish);
+  text-align: center;
 }
 
 /* 模块标题 */
@@ -579,6 +748,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-base);
+  border-bottom: 2px solid var(--border);
 }
 
 .section-header h2 {
@@ -586,22 +757,49 @@ onMounted(() => {
   color: var(--text-1);
   font-weight: 600;
   margin: 0;
+  position: relative;
+}
+
+.section-header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 2px;
 }
 
 .view-all {
   color: var(--text-3);
   text-decoration: none;
   font-size: var(--fs-sm);
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .view-all:hover {
   color: var(--primary);
+  transform: translateX(4px);
+}
+
+.view-all::after {
+  content: '→';
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.view-all:hover::after {
+  transform: translateX(2px);
 }
 
 /* 商品卡片 */
 .featured-products {
   margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl) 0;
 }
 
 .products-grid {
@@ -640,18 +838,25 @@ onMounted(() => {
   font-size: var(--fs-xs);
   font-weight: 600;
   z-index: 10;
+  transition: all 0.3s ease;
 }
 
 .product-tag.hot {
   color: var(--danger);
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid var(--danger);
 }
 
 .product-tag.new {
   color: var(--primary);
+  background: rgba(66, 184, 131, 0.1);
+  border: 1px solid var(--primary);
 }
 
 .product-tag.sale {
   color: var(--warning);
+  background: rgba(250, 173, 20, 0.1);
+  border: 1px solid var(--warning);
 }
 
 .product-image {
@@ -672,6 +877,30 @@ onMounted(() => {
 
 .product-card:hover .product-image img {
   transform: scale(1.05);
+}
+
+.product-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.product-card:hover .product-image-overlay {
+  opacity: 1;
+}
+
+.btn-sm {
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--fs-sm);
 }
 
 .product-info {
@@ -723,6 +952,9 @@ onMounted(() => {
 /* 宠物卡片 */
 .featured-pets {
   margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl) 0;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
 }
 
 .pets-grid {
@@ -771,27 +1003,57 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
+.pet-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.pet-card:hover .pet-image-overlay {
+  opacity: 1;
+}
+
 .pet-info {
   padding: var(--spacing-base);
+}
+
+.pet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
 }
 
 .pet-title {
   font-size: var(--fs-base);
   font-weight: 500;
   color: var(--text-1);
-  margin-bottom: var(--spacing-xs);
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
 }
 
 .pet-breed {
   font-size: var(--fs-xs);
   color: var(--primary);
-  margin-bottom: var(--spacing-xs);
   font-weight: 500;
+  background: rgba(66, 184, 131, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-sm);
 }
 
 .pet-desc {
@@ -807,8 +1069,8 @@ onMounted(() => {
 
 .pet-price-row {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-base);
 }
 
@@ -821,6 +1083,7 @@ onMounted(() => {
 /* 资讯卡片 */
 .latest-news {
   margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl) 0;
 }
 
 .news-grid {
@@ -841,6 +1104,7 @@ onMounted(() => {
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .news-card-link:hover .news-card {
@@ -851,6 +1115,7 @@ onMounted(() => {
 .news-image {
   height: 180px;
   overflow: hidden;
+  position: relative;
 }
 
 .news-image img {
@@ -862,6 +1127,16 @@ onMounted(() => {
 
 .news-card:hover .news-image img {
   transform: scale(1.05);
+}
+
+.news-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+  z-index: 1;
 }
 
 .news-content {
@@ -878,6 +1153,11 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.3s ease;
+}
+
+.news-card-link:hover .news-title {
+  color: var(--primary);
 }
 
 .news-desc {
@@ -895,6 +1175,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
 }
 
 .news-time {
@@ -902,16 +1184,69 @@ onMounted(() => {
   color: var(--text-3);
 }
 
-.read-more {
-  color: var(--primary);
-  text-decoration: none;
+.news-read-more {
   font-size: var(--fs-xs);
+  color: var(--primary);
   font-weight: 500;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.read-more:hover {
-  color: var(--primary-dark);
+.news-card-link:hover .news-read-more {
+  transform: translateX(4px);
+}
+
+/* 服务保障 */
+.service-guarantee {
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.service-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-xl);
+  text-align: center;
+}
+
+.service-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xl);
+  background: var(--bg);
+  border-radius: var(--radius-base);
+  transition: all 0.3s ease;
+}
+
+.service-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.service-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-base);
+  transition: transform 0.3s ease;
+}
+
+.service-item:hover .service-icon {
+  transform: scale(1.1);
+}
+
+.service-content h4 {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: var(--spacing-xs);
+}
+
+.service-content p {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin: 0;
 }
 
 /* 移动端适配 */
@@ -929,14 +1264,35 @@ onMounted(() => {
     font-size: var(--fs-sm);
   }
   
+  .banner-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-base);
+  }
+  
   .banner-actions .btn {
     font-size: var(--fs-base);
     padding: var(--spacing-sm) var(--spacing-xl);
   }
   
+  .slider-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  
+  .slider-btn-prev {
+    left: var(--spacing-base);
+  }
+  
+  .slider-btn-next {
+    right: var(--spacing-base);
+  }
+  
   /* 分类导航适配 */
   .categories {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-base);
   }
   
   .category-item {
@@ -944,7 +1300,7 @@ onMounted(() => {
   }
   
   .category-icon {
-    font-size: 24px;
+    font-size: 32px;
   }
   
   /* 商品网格适配 */
@@ -985,6 +1341,20 @@ onMounted(() => {
     height: 140px;
   }
   
+  /* 服务保障适配 */
+  .service-items {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-base);
+  }
+  
+  .service-item {
+    padding: var(--spacing-lg);
+  }
+  
+  .service-icon {
+    font-size: 32px;
+  }
+  
   /* 标题适配 */
   .section-header h2 {
     font-size: var(--fs-lg);
@@ -1013,6 +1383,10 @@ onMounted(() => {
   .news-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .service-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* 大屏幕适配 */
@@ -1031,6 +1405,10 @@ onMounted(() => {
   
   .news-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .service-items {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 </style>
