@@ -314,64 +314,13 @@ const submitOrder = async () => {
         const amount = totalAmount.value
         const body = selectedItems.value.map(item => item.chongwuyongpinName).join(', ')
         
-        // 根据支付方式调用相应的支付接口
-        if (paymentType.value === 1) {
-          // 微信支付
-          try {
-            const wechatPayResponse = await chongwuyongpinOrderApi.wechatPay({
-              orderNo,
-              amount: Math.round(amount * 100), // 转换为分
-              body,
-              openid: 'test_openid' // 实际应该从用户信息中获取
-            })
-            
-            if (wechatPayResponse.code === 0) {
-              // 调用微信支付JSAPI
-              if (typeof WeixinJSBridge !== 'undefined') {
-                WeixinJSBridge.invoke('getBrandWCPayRequest', wechatPayResponse.data, function(res) {
-                  if (res.err_msg === 'get_brand_wcpay_request:ok') {
-                    setPayStatus('success', '支付成功', '您的订单已支付成功，正在跳转至订单页面...', '✅')
-                    setTimeout(() => {
-                      router.push('/user/orders')
-                    }, 2000)
-                  } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
-                    setPayStatus('cancel', '支付已取消', '您已取消支付，可重新尝试支付或返回购物车', '⏹️')
-                  } else {
-                    setPayStatus('error', '支付失败', '支付失败，请检查网络连接后重新尝试', '❌')
-                  }
-                })
-              } else {
-                setPayStatus('error', '支付失败', '请在微信浏览器中打开进行支付', '❌')
-              }
-            } else {
-              setPayStatus('error', '支付下单失败', '微信支付下单失败：' + (wechatPayResponse.msg || '未知错误'), '❌')
-            }
-          } catch (error) {
-            console.error('微信支付异常:', error)
-            setPayStatus('error', '支付异常', '微信支付异常，请检查网络连接后重试', '❌')
-          }
-        } else if (paymentType.value === 2) {
-          // 支付宝支付
-          try {
-            const alipayResponse = await chongwuyongpinOrderApi.alipay({
-              orderNo,
-              amount,
-              subject: '宠物商品订单',
-              body
-            })
-            
-            if (alipayResponse.code === 0) {
-              // 跳转到支付宝支付页面
-              document.write(alipayResponse.data)
-              document.close()
-            } else {
-              setPayStatus('error', '支付下单失败', '支付宝支付下单失败：' + (alipayResponse.msg || '未知错误'), '❌')
-            }
-          } catch (error) {
-            console.error('支付宝支付异常:', error)
-            setPayStatus('error', '支付异常', '支付宝支付异常，请检查网络连接后重试', '❌')
-          }
-        }
+        // 模拟支付流程
+        setTimeout(() => {
+          setPayStatus('success', '支付成功', '您的订单已支付成功，正在跳转至订单页面...', '✅')
+          setTimeout(() => {
+            router.push('/user/orders')
+          }, 2000)
+        }, 1000)
       } else {
         message.error('订单创建失败')
       }

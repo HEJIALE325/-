@@ -460,6 +460,8 @@ public class ChongwuyongpinOrderController {
             // 计算金额
             Double money = new BigDecimal(chongwuyongpinEntity.getChongwuyongpinNewMoney()).multiply(new BigDecimal(buyNumber)).multiply(zhekou).doubleValue();
             chongwuyongpinOrderEntity.setChongwuyongpinOrderTruePrice(money);
+            // 模拟支付成功，直接设置为已支付状态
+            chongwuyongpinOrderEntity.setChongwuyongpinOrderTypes(101); // 已支付
             chongwuyongpinOrderList.add(chongwuyongpinOrderEntity);
             chongwuyongpinList.add(chongwuyongpinEntity);
 
