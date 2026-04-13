@@ -65,22 +65,22 @@
               <tr v-for="order in orders" :key="order.id">
                 <td>{{ order.id }}</td>
                 <td>{{ order.petName }}</td>
-                <td>{{ order.breed }}</td>
-                <td>¥{{ order.totalPrice }}</td>
+                <td>{{ order.petAge || '-' }}</td>
+                <td>¥{{ order.price }}</td>
                 <td>{{ formatDate(order.createTime) }}</td>
                 <td>
-                  <span :class="['status-badge', getStatusClass(order.status)]">
-                    {{ getStatusText(order.status) }}
+                  <span :class="['status-badge', getStatusClass(order.orderStatus)]">
+                    {{ getStatusText(order.orderStatus) }}
                   </span>
                 </td>
                 <td>
                   <button class="btn btn-sm btn-secondary" @click="viewOrderDetail(order)">
                     查看详情
                   </button>
-                  <button v-if="order.status === 0" class="btn btn-sm btn-primary" @click="payOrder(order.id)">
+                  <button v-if="order.orderStatus === 1" class="btn btn-sm btn-primary" @click="payOrder(order.id)">
                     立即支付
                   </button>
-                  <button v-if="order.status === 0" class="btn btn-sm btn-danger" @click="cancelOrder(order.id)">
+                  <button v-if="order.orderStatus === 1" class="btn btn-sm btn-danger" @click="cancelOrder(order.id)">
                     取消订单
                   </button>
                 </td>
@@ -139,11 +139,11 @@
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">订单状态：</span>
-                  <span class="detail-value">{{ getStatusText(currentOrder.status) }}</span>
+                  <span class="detail-value">{{ getStatusText(currentOrder.orderStatus) }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">订单金额：</span>
-                  <span class="detail-value">¥{{ currentOrder.totalPrice }}</span>
+                  <span class="detail-value">¥{{ currentOrder.price }}</span>
                 </div>
               </div>
             </div>
@@ -153,36 +153,18 @@
               <h4>宠物信息</h4>
               <div class="pet-info-full">
                 <div class="pet-image">
-                  <img :src="currentOrder.petImageUrl" :alt="currentOrder.petName">
+                  <img :src="'http://localhost:8080/wangshangchongwudian/' + currentOrder.petImageUrl" :alt="currentOrder.petName">
                 </div>
                 <div class="pet-details">
                   <h5>{{ currentOrder.petName }}</h5>
-                  <p>品种：{{ currentOrder.breed }}</p>
-                  <p>性别：{{ currentOrder.gender }}</p>
-                  <p>年龄：{{ currentOrder.age }}</p>
-                  <p>价格：¥{{ currentOrder.totalPrice }}</p>
+                  <p>性别：{{ currentOrder.petGender }}</p>
+                  <p>年龄：{{ currentOrder.petAge }}</p>
+                  <p>价格：¥{{ currentOrder.price }}</p>
                 </div>
               </div>
             </div>
             
-            <!-- 用户信息 -->
-            <div class="detail-section">
-              <h4>用户信息</h4>
-              <div class="detail-grid">
-                <div class="detail-item">
-                  <span class="detail-label">用户姓名：</span>
-                  <span class="detail-value">{{ currentOrder.yonghuName }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">联系电话：</span>
-                  <span class="detail-value">{{ currentOrder.yonghuPhone }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">电子邮箱：</span>
-                  <span class="detail-value">{{ currentOrder.yonghuEmail }}</span>
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
         <div class="modal-footer">
@@ -294,9 +276,19 @@ const handleReset = () => {
 }
 
 // 查看订单详情
-const viewOrderDetail = (order) => {
-  currentOrder.value = order
-  showDetailModal.value = true
+const viewOrderDetail = async (order) => {
+  try {
+    const response = await petOrderApi.getDetail(order.id)
+    if (response.code === 0) {
+      currentOrder.value = response.data
+      showDetailModal.value = true
+    } else {
+      message.error('获取订单详情失败')
+    }
+  } catch (error) {
+    console.error('获取订单详情失败:', error)
+    message.error('获取订单详情失败，请稍后重试')
+  }
 }
 
 // 立即支付
