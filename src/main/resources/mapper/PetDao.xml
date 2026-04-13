@@ -4,7 +4,8 @@
 <mapper namespace="com.dao.PetDao">
 
     <select id="selectListView" parameterType="map" resultType="com.entity.PetEntity">
-        SELECT  p.* FROM pets  p
+        SELECT  p.*, pc.name as categoryName FROM pets  p
+        LEFT JOIN pet_category pc ON p.category_id = pc.id
         <where> 1=1
             <if test="params.ids != null">
                 and p.id in
@@ -16,7 +17,9 @@
                 and p.name like CONCAT('%',#{params.name},'%')
             </if>
             <if test="params.categoryId != null and params.categoryId != ''">
-                and p.category_id = #{params.categoryId}
+                and (p.category_id = #{params.categoryId} OR p.category_id IN (
+                    SELECT id FROM pet_category WHERE parent_id = #{params.categoryId}
+                ))
             </if>
             <if test=" params.gender != '' and params.gender != null and params.gender != 'null' ">
                 and p.gender = #{params.gender}

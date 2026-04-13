@@ -70,6 +70,11 @@ public class PetEntity<T> implements Serializable {
 
     private Integer categoryId;
 
+    /**
+     * 分类名称
+     */
+    @TableField(exist = false)
+    private String categoryName;
 
     /**
      * 性别
@@ -192,6 +197,18 @@ public class PetEntity<T> implements Serializable {
 
     public void setCategoryId(Integer categoryId) {
         this.categoryId = categoryId;
+    }
+    /**
+     * 获取：分类名称
+     */
+    public String getCategoryName() {
+        return categoryName;
+    }
+    /**
+     * 设置：分类名称
+     */
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
     /**
 	 * 获取：性别
