@@ -15,12 +15,13 @@
         <div class="navbar-actions">
           <!-- 导航链接 -->
           <nav class="nav">
-            <router-link to="/" class="nav-link">首页</router-link>
-            <router-link to="/products" class="nav-link">商品</router-link>
-            <router-link to="/chongwujiyang" class="nav-link">宠物寄养</router-link>
-            <router-link to="/forum" class="nav-link">论坛</router-link>
-            <router-link to="/news" class="nav-link">资讯</router-link>
-          </nav>
+              <router-link to="/" class="nav-link">首页</router-link>
+              <router-link to="/products" class="nav-link">商品</router-link>
+              <router-link to="/pets" class="nav-link">宠物</router-link>
+              <router-link to="/chongwujiyang" class="nav-link">宠物寄养</router-link>
+              <router-link to="/forum" class="nav-link">论坛</router-link>
+              <router-link to="/news" class="nav-link">资讯</router-link>
+            </nav>
           
           <!-- 购物车图标 -->
           <div class="cart-container" @mouseenter="handleCartMouseEnter" @mouseleave="handleCartMouseLeave">
@@ -82,6 +83,7 @@
               <router-link to="/user/profile" class="menu-item">个人中心</router-link>
               <router-link to="/user/orders" class="menu-item">我的订单</router-link>
               <router-link to="/user/pet-orders" class="menu-item">宠物寄存订单</router-link>
+              <router-link to="/user/pet-purchase-orders" class="menu-item">宠物购买订单</router-link>
               <router-link to="/user/comments" class="menu-item">我的评价</router-link>
               <router-link to="/user/favorites" class="menu-item">我的收藏</router-link>
               <router-link to="/user/address" class="menu-item">地址管理</router-link>

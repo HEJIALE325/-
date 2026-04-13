@@ -70,6 +70,22 @@ const router = createRouter({
       name: 'user-pet-orders',
       component: () => import('../views/user/PetOrdersView.vue')
     },
+    // 宠物购买相关路由
+    {
+      path: '/pets',
+      name: 'user-pets',
+      component: () => import('../views/user/PetsView.vue')
+    },
+    {
+      path: '/pet/:id',
+      name: 'user-pet-detail',
+      component: () => import('../views/user/PetDetailView.vue')
+    },
+    {
+      path: '/user/pet-purchase-orders',
+      name: 'user-pet-purchase-orders',
+      component: () => import('../views/user/PetPurchaseOrdersView.vue')
+    },
     {
       path: '/news',
       name: 'user-news',
