@@ -67,6 +67,8 @@ const chatBody = ref(null)
 let pollTimer = null
 // 用户信息
 const userInfo = ref(null)
+// 消息列表初始化标志
+const messagesInitialized = ref(false)
 
 // 切换聊天窗口
 const toggleChatWindow = () => {
@@ -131,6 +133,8 @@ const getChatHistory = async () => {
       })
       // 按时间排序
       messages.value = allMessages.sort((a, b) => new Date(a.time) - new Date(b.time))
+      // 标记消息列表已初始化
+      messagesInitialized.value = true
       // 滚动到底部
       scrollToBottom()
     }
@@ -286,7 +290,7 @@ const checkNewMessages = async () => {
         const newAdminMessages = newMessages.filter(msg => msg.type === 'admin')
         
         messages.value = [...messages.value, ...newMessages].sort((a, b) => new Date(a.time) - new Date(b.time))
-        if (!showChatWindow.value && newAdminMessages.length > 0) {
+        if (messagesInitialized.value && !showChatWindow.value && newAdminMessages.length > 0) {
           unreadCount.value += newAdminMessages.length
         }
         scrollToBottom()
