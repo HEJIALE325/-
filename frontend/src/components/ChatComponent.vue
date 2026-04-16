@@ -105,14 +105,32 @@ const getChatHistory = async () => {
     const response = await chatApi.getList(params)
     if (response.code === 0) {
       const chatList = response.data.list || []
-      // 转换为消息格式
-      messages.value = chatList.map(item => ({
-        id: item.id,
-        content: item.chatIssue || item.chatReply,
-        time: item.issueTime || item.replyTime,
-        type: item.chatReply ? 'admin' : 'user',
-        status: item.zhuangtaiTypes
-      })).sort((a, b) => new Date(a.time) - new Date(b.time))
+      // 转换为消息格式，把问题和回复分成两条独立的消息
+      const allMessages = []
+      chatList.forEach(item => {
+        // 添加用户问题
+        if (item.chatIssue) {
+          allMessages.push({
+            id: item.id,
+            content: item.chatIssue,
+            time: item.issueTime,
+            type: 'user',
+            status: item.zhuangtaiTypes
+          })
+        }
+        // 添加管理员回复
+        if (item.chatReply) {
+          allMessages.push({
+            id: item.id + '-reply',
+            content: item.chatReply,
+            time: item.replyTime,
+            type: 'admin',
+            status: item.zhuangtaiTypes
+          })
+        }
+      })
+      // 按时间排序
+      messages.value = allMessages.sort((a, b) => new Date(a.time) - new Date(b.time))
       // 滚动到底部
       scrollToBottom()
     }
@@ -197,21 +215,55 @@ const checkNewMessages = async () => {
       const chatList = response.data.list || []
       const newMessages = []
       
-      // 检查是否有新消息
+      // 检查是否有新消息或新回复
       chatList.forEach(item => {
         const existingMessage = messages.value.find(msg => msg.id === item.id)
         if (!existingMessage) {
-          newMessages.push({
-            id: item.id,
-            content: item.chatIssue || item.chatReply,
-            time: item.issueTime || item.replyTime,
-            type: item.chatReply ? 'admin' : 'user',
-            status: item.zhuangtaiTypes
-          })
-        } else if (existingMessage.status !== item.zhuangtaiTypes) {
+          // 如果是新记录
+          // 检查是否有问题
+          if (item.chatIssue) {
+            newMessages.push({
+              id: item.id,
+              content: item.chatIssue,
+              time: item.issueTime,
+              type: 'user',
+              status: item.zhuangtaiTypes
+            })
+          }
+          // 检查是否有回复
+          if (item.chatReply) {
+            newMessages.push({
+              id: item.id + '-reply', // 使用不同的ID来区分问题和回复
+              content: item.chatReply,
+              time: item.replyTime,
+              type: 'admin',
+              status: item.zhuangtaiTypes
+            })
+          }
+        } else {
+          // 如果是已存在的记录，检查是否有新回复
+          const hasReply = item.chatReply && item.chatReply.trim() !== ''
+          const existingMessageIsUserType = existingMessage.type === 'user'
+          
+          if (hasReply && existingMessageIsUserType) {
+            // 检查是否已经添加了这条回复
+            const existingReply = messages.value.find(msg => msg.id === item.id + '-reply')
+            if (!existingReply) {
+              // 添加新回复
+              newMessages.push({
+                id: item.id + '-reply',
+                content: item.chatReply,
+                time: item.replyTime,
+                type: 'admin',
+                status: item.zhuangtaiTypes
+              })
+            }
+          }
+          
           // 更新状态
-          existingMessage.status = item.zhuangtaiTypes
-          existingMessage.time = item.replyTime || existingMessage.time
+          if (existingMessage.status !== item.zhuangtaiTypes) {
+            existingMessage.status = item.zhuangtaiTypes
+          }
         }
       })
       
