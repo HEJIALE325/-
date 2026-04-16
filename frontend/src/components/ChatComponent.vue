@@ -51,7 +51,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { message } from '../utils/message'
-import { chatApi } from '../utils/api'
+import { chatApi, yonghuApi } from '../utils/api'
 
 // 聊天窗口状态
 const showChatWindow = ref(false)
@@ -65,6 +65,8 @@ const unreadCount = ref(0)
 const chatBody = ref(null)
 // 轮询定时器
 let pollTimer = null
+// 用户信息
+const userInfo = ref(null)
 
 // 切换聊天窗口
 const toggleChatWindow = () => {
@@ -95,7 +97,12 @@ const formatDate = (dateString) => {
 // 获取聊天历史
 const getChatHistory = async () => {
   try {
-    const response = await chatApi.getList({ page: 1, limit: 50 })
+    const params = { page: 1, limit: 50 }
+    // 如果用户已登录，添加yonghuId参数
+    if (userInfo.value) {
+      params.yonghuId = userInfo.value.id
+    }
+    const response = await chatApi.getList(params)
     if (response.code === 0) {
       const chatList = response.data.list || []
       // 转换为消息格式
@@ -131,6 +138,12 @@ const formatDateForBackend = (date) => {
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
 
+  // 检查用户是否登录
+  if (!userInfo.value) {
+    message.error('请先登录后再发送消息')
+    return
+  }
+
   const messageContent = inputMessage.value.trim()
   const currentTime = new Date()
 
@@ -148,6 +161,7 @@ const sendMessage = async () => {
   try {
     // 发送到后端
     const response = await chatApi.add({
+      yonghuId: userInfo.value.id,
       chatIssue: messageContent,
       issueTime: formatDateForBackend(currentTime),
       zhuangtaiTypes: 0,
@@ -173,7 +187,12 @@ const sendMessage = async () => {
 // 检查新消息
 const checkNewMessages = async () => {
   try {
-    const response = await chatApi.getList({ page: 1, limit: 50 })
+    const params = { page: 1, limit: 50 }
+    // 如果用户已登录，添加yonghuId参数
+    if (userInfo.value) {
+      params.yonghuId = userInfo.value.id
+    }
+    const response = await chatApi.getList(params)
     if (response.code === 0) {
       const chatList = response.data.list || []
       const newMessages = []
@@ -218,8 +237,25 @@ const scrollToBottom = () => {
   })
 }
 
+// 获取用户信息
+const getUserInfo = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    
+    const response = await yonghuApi.session()
+    if (response.code === 0) {
+      userInfo.value = response.data
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
+
 // 组件挂载时
-onMounted(() => {
+onMounted(async () => {
+  // 获取用户信息
+  await getUserInfo()
   // 初始化获取聊天历史
   getChatHistory()
   // 设置轮询

@@ -274,6 +274,20 @@ const getList = async () => {
 
 // 搜索
 const handleSearch = () => {
+  // 转换状态值为数字
+  if (searchParams.value.status) {
+    switch (searchParams.value.status) {
+      case 'pending':
+        searchParams.value.status = 0
+        break
+      case 'processing':
+        searchParams.value.status = 1
+        break
+      case 'completed':
+        searchParams.value.status = 2
+        break
+    }
+  }
   currentPage.value = 1
   getList()
 }
