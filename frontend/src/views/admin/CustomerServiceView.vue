@@ -1,190 +1,119 @@
 <template>
   <div class="admin-customer-service">
     <h2>客服聊天管理</h2>
-    <div class="card">
-      <div class="card-body">
-        <!-- 搜索表单 -->
-        <div class="search-section">
-          <form @submit.prevent="handleSearch">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="search-username">用户名</label>
-                <input 
-                  type="text" 
-                  id="search-username" 
-                  v-model="searchParams.username"
-                  placeholder="请输入用户名进行搜索"
-                >
-              </div>
-              <div class="form-group">
-                <label for="search-status">状态</label>
-                <select 
-                  id="search-status" 
-                  v-model="searchParams.status"
-                >
-                  <option value="">全部</option>
-                  <option value="pending">待处理</option>
-                  <option value="processing">处理中</option>
-                  <option value="completed">已完成</option>
-                </select>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                  搜索
-                </button>
-                <button type="button" class="btn btn-secondary" @click="handleReset">
-                  重置
-                </button>
-              </div>
+    <div class="chat-layout">
+      <!-- 左侧用户列表 -->
+      <div class="user-list">
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+          <input 
+            type="text" 
+            v-model="searchParams.username"
+            placeholder="搜索用户..."
+            @keyup.enter="handleSearch"
+          >
+          <button class="search-btn" @click="handleSearch">🔍</button>
+        </div>
+        
+        <!-- 状态筛选 -->
+        <div class="status-filter">
+          <button 
+            v-for="status in statusOptions" 
+            :key="status.value"
+            :class="['status-btn', { active: searchParams.status === status.value }]"
+            @click="searchParams.status = status.value; handleSearch()"
+          >
+            {{ status.label }}
+          </button>
+        </div>
+        
+        <!-- 用户列表 -->
+        <div class="user-items">
+          <div 
+            v-for="user in userList" 
+            :key="user.yonghuId"
+            :class="['user-item', { active: selectedUser && selectedUser.yonghuId === user.yonghuId }]"
+            @click="selectUser(user)"
+          >
+            <div class="user-avatar">
+              <img v-if="user.yonghuPhoto" :src="`http://localhost:8080/wangshangchongwudian/${user.yonghuPhoto}`" :alt="user.yonghuName">
+              <div v-else class="avatar-placeholder">{{ user.yonghuName?.charAt(0) || '用' }}</div>
+              <span v-if="user.unreadCount > 0" class="unread-badge">{{ user.unreadCount }}</span>
             </div>
-          </form>
-        </div>
-        
-        <div class="table-container">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>用户名</th>
-                <th>用户名称</th>
-                <th>联系方式</th>
-                <th>咨询内容</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in list" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>{{ item.yonghuName }}</td>
-                <td>{{ item.yonghuPhone }}</td>
-                <td>{{ item.chatIssue }}</td>
-                <td>
-                  <span class="status-tag" :class="getStatusClass(item.zhuangtaiTypes)">
-                    {{ getStatusText(item.zhuangtaiTypes) }}
-                  </span>
-                </td>
-                <td>{{ formatDate(item.issueTime) }}</td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" @click="handleView(item)">
-                    查看
-                  </button>
-                  <button 
-                    class="btn btn-primary btn-sm" 
-                    @click="handleProcess(item)"
-                    v-if="item.zhuangtaiTypes !== 2"
-                  >
-                    处理
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- 分页 -->
-        <div class="pagination">
-          <button 
-            class="btn btn-secondary" 
-            @click="handlePrevPage"
-            :disabled="currentPage === 1"
-          >
-            上一页
-          </button>
-          <span class="page-info">
-            第 {{ currentPage }} / {{ totalPages }} 页
-          </span>
-          <button 
-            class="btn btn-secondary" 
-            @click="handleNextPage"
-            :disabled="currentPage === totalPages"
-          >
-            下一页
-          </button>
+            <div class="user-info">
+              <div class="user-name">{{ user.yonghuName }}</div>
+              <div class="user-last-message">{{ user.lastMessage || '暂无消息' }}</div>
+            </div>
+            <div class="user-meta">
+              <div class="message-time">{{ formatDate(user.lastMessageTime) }}</div>
+              <span class="status-indicator" :class="getStatusClass(user.status)">
+                {{ getStatusText(user.status) }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <!-- 详情模态框 -->
-    <div class="modal" v-if="showDetailModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>聊天详情</h3>
-          <button class="close-btn" @click="closeDetailModal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="detail-item">
-            <label>ID：</label>
-            <span>{{ currentItem.id }}</span>
+      
+      <!-- 右侧聊天窗口 -->
+      <div class="chat-window" v-if="selectedUser">
+        <!-- 聊天头部 -->
+        <div class="chat-header">
+          <div class="chat-user-info">
+            <div class="user-avatar">
+              <img v-if="selectedUser.yonghuPhoto" :src="`http://localhost:8080/wangshangchongwudian/${selectedUser.yonghuPhoto}`" :alt="selectedUser.yonghuName">
+              <div v-else class="avatar-placeholder">{{ selectedUser.yonghuName?.charAt(0) || '用' }}</div>
+            </div>
+            <div class="user-details">
+              <div class="user-name">{{ selectedUser.yonghuName }}</div>
+              <div class="user-phone">{{ selectedUser.yonghuPhone }}</div>
+            </div>
           </div>
-          <div class="detail-item">
-            <label>用户名称：</label>
-            <span>{{ currentItem.yonghuName }}</span>
-          </div>
-          <div class="detail-item">
-            <label>联系方式：</label>
-            <span>{{ currentItem.yonghuPhone }}</span>
-          </div>
-          <div class="detail-item">
-            <label>咨询内容：</label>
-            <span>{{ currentItem.chatIssue }}</span>
-          </div>
-          <div class="detail-item">
-            <label>状态：</label>
-            <span class="status-tag" :class="getStatusClass(currentItem.zhuangtaiTypes)">
-              {{ getStatusText(currentItem.zhuangtaiTypes) }}
+          <div class="chat-actions">
+            <span class="status-tag" :class="getStatusClass(selectedUser.status)">
+              {{ getStatusText(selectedUser.status) }}
             </span>
           </div>
-          <div class="detail-item" v-if="currentItem.chatReply">
-            <label>回复内容：</label>
-            <span>{{ currentItem.chatReply }}</span>
+        </div>
+        
+        <!-- 聊天内容 -->
+        <div class="chat-body" ref="chatBody">
+          <div class="message-list">
+            <div 
+              v-for="message in chatMessages" 
+              :key="message.id"
+              :class="['message-item', message.type]"
+            >
+              <div class="message-content">
+                <p>{{ message.content }}</p>
+                <span class="message-time">{{ formatDate(message.time) }}</span>
+              </div>
+              <div class="message-status" v-if="message.type === 'admin'">
+                <span class="status-completed">已回复</span>
+              </div>
+            </div>
           </div>
-          <div class="detail-item">
-            <label>咨询时间：</label>
-            <span>{{ formatDate(currentItem.issueTime) }}</span>
-          </div>
-          <div class="detail-item" v-if="currentItem.replyTime">
-            <label>回复时间：</label>
-            <span>{{ formatDate(currentItem.replyTime) }}</span>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="closeDetailModal">关闭</button>
-          </div>
+        </div>
+        
+        <!-- 聊天输入 -->
+        <div class="chat-footer">
+          <textarea 
+            v-model="replyContent"
+            placeholder="请输入回复内容..."
+            rows="3"
+            @keyup.enter.exact="sendReply"
+          ></textarea>
+          <button class="send-button" @click="sendReply" :disabled="!replyContent.trim() || isLoading">
+            {{ isLoading ? '发送中...' : '发送' }}
+          </button>
         </div>
       </div>
-    </div>
-    
-    <!-- 处理模态框 -->
-    <div class="modal" v-if="showProcessModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>处理咨询</h3>
-          <button class="close-btn" @click="closeProcessModal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-group">
-              <label>咨询内容</label>
-              <div class="consult-content">{{ currentItem.chatIssue }}</div>
-            </div>
-            <div class="form-group">
-              <label for="form-response">回复内容</label>
-              <textarea 
-                id="form-response" 
-                v-model="formData.response"
-                placeholder="请输入回复内容"
-                rows="4"
-                required
-              ></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn btn-secondary" @click="closeProcessModal">取消</button>
-              <button type="submit" class="btn btn-primary" :disabled="isLoading">
-                {{ isLoading ? '保存中...' : '保存' }}
-              </button>
-            </div>
-          </form>
+      
+      <!-- 空状态 -->
+      <div class="empty-state" v-else>
+        <div class="empty-content">
+          <div class="empty-icon">💬</div>
+          <h3>请选择一个用户开始聊天</h3>
+          <p>从左侧列表中选择一个用户，即可开始客服对话</p>
         </div>
       </div>
     </div>
@@ -192,35 +121,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { message } from '../../utils/message'
-import { chatApi } from '../../utils/api'
+import { chatApi, yonghuApi } from '../../utils/api'
 
-// 列表数据
-const list = ref([])
 // 搜索参数
 const searchParams = ref({
   username: '',
   status: ''
 })
-// 分页参数
-const currentPage = ref(1)
-const pageSize = ref(10)
-const totalPages = ref(1)
 // 加载状态
 const isLoading = ref(false)
-// 详情模态框
-const showDetailModal = ref(false)
-const currentItem = ref({})
-// 处理模态框
-const showProcessModal = ref(false)
-const formData = ref({})
+// 用户列表
+const userList = ref([])
+// 选中的用户
+const selectedUser = ref(null)
+// 聊天消息
+const chatMessages = ref([])
+// 回复内容
+const replyContent = ref('')
+// 聊天主体元素
+const chatBody = ref(null)
+// 状态选项
+const statusOptions = [
+  { value: '', label: '全部' },
+  { value: 'pending', label: '待处理' },
+  { value: 'processing', label: '处理中' },
+  { value: 'completed', label: '已完成' }
+]
 
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
-  return date.toLocaleString()
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 // 获取状态样式类
@@ -251,22 +190,67 @@ const getStatusText = (status) => {
   }
 }
 
-// 获取列表数据
-const getList = async () => {
+// 获取用户列表
+const getUserList = async () => {
   try {
     isLoading.value = true
+    // 转换状态值为数字
+    const params = { ...searchParams.value }
+    if (params.status) {
+      switch (params.status) {
+        case 'pending':
+          params.status = 0
+          break
+        case 'processing':
+          params.status = 1
+          break
+        case 'completed':
+          params.status = 2
+          break
+      }
+    }
     const response = await chatApi.getPage({
-      page: currentPage.value,
-      limit: pageSize.value,
-      ...searchParams.value
+      page: 1,
+      limit: 100,
+      ...params
     })
     if (response.code === 0) {
-      list.value = response.data.list || []
-      totalPages.value = Math.ceil(response.data.total / pageSize.value)
+      const chatList = response.data.list || []
+      // 按用户分组
+      const userMap = new Map()
+      chatList.forEach(item => {
+        if (!userMap.has(item.yonghuId)) {
+          userMap.set(item.yonghuId, {
+            yonghuId: item.yonghuId,
+            yonghuName: item.yonghuName,
+            yonghuPhone: item.yonghuPhone,
+            yonghuPhoto: item.yonghuPhoto,
+            lastMessage: item.chatIssue || item.chatReply,
+            lastMessageTime: item.issueTime || item.replyTime,
+            status: item.zhuangtaiTypes,
+            unreadCount: 0
+          })
+        } else {
+          const user = userMap.get(item.yonghuId)
+          const messageTime = new Date(item.issueTime || item.replyTime)
+          const lastTime = new Date(user.lastMessageTime)
+          if (messageTime > lastTime) {
+            user.lastMessage = item.chatIssue || item.chatReply
+            user.lastMessageTime = item.issueTime || item.replyTime
+          }
+          if (item.zhuangtaiTypes === 0) {
+            user.unreadCount++
+          }
+        }
+      })
+      // 转换为数组并按最后消息时间排序
+      userList.value = Array.from(userMap.values()).sort((a, b) => {
+        return new Date(b.lastMessageTime) - new Date(a.lastMessageTime)
+      })
     }
   } catch (error) {
-    console.error('获取客服聊天列表失败:', error)
-    message.error('获取列表失败')
+    console.error('获取用户列表失败:', error)
+    message.error('获取用户列表失败')
   } finally {
     isLoading.value = false
   }
@@ -274,47 +258,48 @@ const getList = async () => {
 
 // 搜索
 const handleSearch = () => {
-  // 转换状态值为数字
-  if (searchParams.value.status) {
-    switch (searchParams.value.status) {
-      case 'pending':
-        searchParams.value.status = 0
-        break
-      case 'processing':
-        searchParams.value.status = 1
-        break
-      case 'completed':
-        searchParams.value.status = 2
-        break
+  getUserList()
+}
+
+// 选择用户
+const selectUser = async (user) => {
+  selectedUser.value = user
+  await getChatMessages(user.yonghuId)
+}
+
+// 获取聊天消息
+const getChatMessages = async (yonghuId) => {
+  try {
+    const response = await chatApi.getList({
+      yonghuId: yonghuId,
+      page: 1,
+      limit: 100
+    })
+    if (response.code === 0) {
+      const chatList = response.data.list || []
+      // 转换为消息格式
+      chatMessages.value = chatList.map(item => ({
+        id: item.id,
+        content: item.chatIssue || item.chatReply,
+        time: item.issueTime || item.replyTime,
+        type: item.chatReply ? 'admin' : 'user'
+      })).sort((a, b) => new Date(a.time) - new Date(b.time))
+      // 滚动到底部
+      scrollToBottom()
     }
+  } catch (error) {
+    console.error('获取聊天消息失败:', error)
+    message.error('获取聊天消息失败')
   }
-  currentPage.value = 1
-  getList()
 }
 
-// 重置搜索
-const handleReset = () => {
-  searchParams.value = {
-    username: '',
-    status: ''
-  }
-  currentPage.value = 1
-  getList()
-}
-
-// 查看详情
-const handleView = (item) => {
-  currentItem.value = { ...item }
-  showDetailModal.value = true
-}
-
-// 处理咨询
-const handleProcess = (item) => {
-  currentItem.value = { ...item }
-  formData.value = {
-    response: item.chatReply || ''
-  }
-  showProcessModal.value = true
+// 滚动到底部
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatBody.value) {
+      chatBody.value.scrollTop = chatBody.value.scrollHeight
+    }
+  })
 }
 
 // 格式化日期为后端期望的格式
@@ -329,67 +314,76 @@ const formatDateForBackend = (date) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-// 提交回复
-const handleSubmit = async () => {
+// 发送回复
+const sendReply = async () => {
+  if (!replyContent.value.trim()) return
+  if (!selectedUser.value) return
+
+  const replyText = replyContent.value.trim()
+  const currentTime = new Date()
+
+  // 先添加到消息列表
+  const newMessage = {
+    id: Date.now(),
+    content: replyText,
+    time: currentTime,
+    type: 'admin'
+  }
+  chatMessages.value.push(newMessage)
+  replyContent.value = ''
+  scrollToBottom()
+
   try {
     isLoading.value = true
-    const currentTime = new Date()
-    const response = await chatApi.update({
-      id: currentItem.value.id,
-      chatReply: formData.value.response,
-      replyTime: formatDateForBackend(currentTime),
-      zhuangtaiTypes: 2
+    // 查找对应的聊天记录
+    const response = await chatApi.getList({
+      yonghuId: selectedUser.value.yonghuId,
+      page: 1,
+      limit: 10
     })
-    if (response.code === 0) {
-      currentItem.value.chatReply = formData.value.response
-      currentItem.value.zhuangtaiTypes = 2
-      currentItem.value.replyTime = new Date()
-      // 更新列表数据
-      const index = list.value.findIndex(item => item.id === currentItem.value.id)
-      if (index !== -1) {
-        list.value[index] = { ...currentItem.value }
+    if (response.code === 0 && response.data.list && response.data.list.length > 0) {
+      const chatItem = response.data.list[0]
+      // 更新回复
+      const updateResponse = await chatApi.update({
+        id: chatItem.id,
+        chatReply: replyText,
+        replyTime: formatDateForBackend(currentTime),
+        zhuangtaiTypes: 2
+      })
+      if (updateResponse.code === 0) {
+        // 更新用户状态
+        selectedUser.value.status = 2
+        // 更新用户列表
+        const userIndex = userList.value.findIndex(u => u.yonghuId === selectedUser.value.yonghuId)
+        if (userIndex !== -1) {
+          userList.value[userIndex].status = 2
+          userList.value[userIndex].lastMessage = replyText
+          userList.value[userIndex].lastMessageTime = currentTime
+        }
+        message.success('回复成功')
+      } else {
+        message.error('回复失败')
+        // 移除失败的消息
+        chatMessages.value.pop()
       }
-      closeProcessModal()
-      message.success('处理成功')
     } else {
-      message.error('处理失败')
+      message.error('未找到对应的聊天记录')
+      // 移除失败的消息
+      chatMessages.value.pop()
     }
   } catch (error) {
-    console.error('处理咨询失败:', error)
-    message.error('处理失败')
+    console.error('发送回复失败:', error)
+    message.error('回复失败')
+    // 移除失败的消息
+    chatMessages.value.pop()
   } finally {
     isLoading.value = false
   }
 }
 
-// 关闭详情模态框
-const closeDetailModal = () => {
-  showDetailModal.value = false
-}
-
-// 关闭处理模态框
-const closeProcessModal = () => {
-  showProcessModal.value = false
-}
-
-// 分页处理
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    getList()
-  }
-}
-
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    getList()
-  }
-}
-
-// 组件挂载时获取列表数据
+// 组件挂载时获取用户列表
 onMounted(() => {
-  getList()
+  getUserList()
 })
 </script>
 
@@ -397,6 +391,9 @@ onMounted(() => {
 /* 样式与其他管理页面保持一致 */
 .admin-customer-service {
   padding: 0;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
 }
 
 h2 {
@@ -405,192 +402,441 @@ h2 {
   font-size: 20px;
 }
 
-/* 主卡片容器 */
-.card {
+/* 聊天布局 */
+.chat-layout {
+  display: flex;
+  flex: 1;
   background-color: var(--card);
   border-radius: var(--radius-base);
   box-shadow: var(--shadow-base);
   overflow: hidden;
+  min-height: 600px;
 }
 
-.card-body {
-  padding: 24px;
-}
-
-/* 搜索区域样式 */
-.search-section {
-  margin-bottom: 24px;
-  background-color: white;
-  padding: 20px;
-  border-radius: var(--radius-base);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-}
-
-.form-row {
+/* 左侧用户列表 */
+.user-list {
+  width: 320px;
+  border-right: 1px solid var(--border);
   display: flex;
-  align-items: flex-end;
-  gap: 24px;
+  flex-direction: column;
+  background-color: white;
+}
+
+/* 搜索栏 */
+.search-bar {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background-color: var(--bg);
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-base);
+  font-size: 14px;
+  background-color: white;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(66, 184, 131, 0.1);
+}
+
+.search-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-2);
+  padding: 8px;
+  border-radius: var(--radius-base);
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-1);
+}
+
+/* 状态筛选 */
+.status-filter {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.form-group {
-  flex: 1;
-  min-width: 200px;
-  max-width: 300px;
+.status-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: white;
+  color: var(--text-2);
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
+.status-btn.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.status-btn:hover:not(.active) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 用户列表 */
+.user-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.user-item {
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.user-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.user-item.active {
+  background-color: rgba(66, 184, 131, 0.05);
+  border-left: 3px solid var(--primary);
+}
+
+/* 用户头像 */
+.user-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.avatar-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  border: 2px solid var(--border);
+}
+
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--danger);
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-weight: 600;
+}
+
+/* 用户信息 */
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
   font-weight: 500;
   color: var(--text-1);
   font-size: 14px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
+.user-last-message {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 用户元信息 */
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.status-indicator {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+/* 右侧聊天窗口 */
+.chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+}
+
+/* 聊天头部 */
+.chat-header {
+  padding: 16px 24px;
+  background-color: white;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chat-user-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat-user-info .user-avatar img {
+  width: 40px;
+  height: 40px;
+}
+
+.chat-user-info .avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-details .user-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-phone {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.chat-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-tag {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 聊天内容 */
+.chat-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+  background-image: url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=light%20gray%20background%20with%20subtle%20pattern%20for%20chat%20interface&image_size=square');
+  background-size: 200px;
+}
+
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.message-item {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.message-item.user {
+  align-self: flex-start;
+  background-color: white;
+  color: var(--text-1);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-item.admin {
+  align-self: flex-end;
+  background-color: var(--primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-content p {
+  margin: 0;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  align-self: flex-end;
+}
+
+.message-status {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.8;
+  align-self: flex-end;
+}
+
+/* 聊天输入 */
+.chat-footer {
+  padding: 16px 24px;
+  background-color: white;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chat-footer textarea {
+  flex: 1;
   padding: 12px 16px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-base);
+  border-radius: 20px;
+  resize: none;
   font-size: 14px;
-  transition: all 0.3s ease;
   font-family: inherit;
+  min-height: 60px;
+  max-height: 120px;
+  outline: none;
+  transition: all 0.3s ease;
+  background-color: var(--bg);
+}
+
+.chat-footer textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(66, 184, 131, 0.2);
   background-color: white;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.consult-content {
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-base);
-  background-color: var(--bg);
-  min-height: 60px;
-  white-space: pre-wrap;
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* 按钮样式增强 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-base);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-}
-
-.btn-primary {
+.send-button {
+  padding: 12px 24px;
   background-color: var(--primary);
   color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  align-self: flex-end;
 }
 
-.btn-primary:hover {
+.send-button:hover {
   background-color: var(--primary-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(66, 184, 131, 0.3);
 }
 
-.btn-secondary {
-  background-color: white;
-  color: var(--text-1);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background-color: var(--hover-bg);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.btn:disabled {
-  opacity: 0.5;
+.send-button:disabled {
+  background-color: #d9d9d9;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-  margin-right: 8px;
+/* 空状态 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
 }
 
-/* 表格容器 */
-.table-container {
-  overflow-x: auto;
-  margin-bottom: 24px;
+.empty-content {
+  text-align: center;
+  padding: 48px;
   background-color: white;
   border-radius: var(--radius-base);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
+  max-width: 400px;
 }
 
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
 }
 
-.admin-table th,
-.admin-table td {
-  padding: 16px 20px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-}
-
-.admin-table th {
-  background-color: var(--bg);
-  font-weight: 600;
+.empty-content h3 {
+  margin: 0 0 8px 0;
   color: var(--text-1);
+  font-size: 18px;
+}
+
+.empty-content p {
+  margin: 0;
+  color: var(--text-2);
   font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.admin-table tr:last-child td {
-  border-bottom: none;
-}
-
-.admin-table tr:hover {
-  background-color: var(--hover-bg);
-  transition: background-color 0.2s ease;
-}
-
-/* 状态标签样式 */
-.status-tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
+/* 状态样式 */
 .status-pending {
   background-color: rgba(250, 152, 3, 0.1);
   color: var(--warning);
@@ -606,158 +852,52 @@ h2 {
   color: var(--success);
 }
 
-/* 分页样式 */
-.pagination {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
-  font-size: 14px;
-  color: var(--text-2);
+/* 滚动条样式 */
+.user-items::-webkit-scrollbar,
+.chat-body::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* 弹窗样式 */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(2px);
+.user-items::-webkit-scrollbar-track,
+.chat-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
 }
 
-.modal-content {
-  background-color: var(--card);
-  border-radius: var(--radius-base);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: modalSlideIn 0.3s ease-out;
+.user-items::-webkit-scrollbar-thumb,
+.chat-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
 }
 
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
+.user-items::-webkit-scrollbar-thumb:hover,
+.chat-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .user-list {
+    width: 100%;
+    height: 300px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-  background-color: var(--bg);
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-1);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-3);
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-base);
-  transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-  background-color: var(--hover-bg);
-  color: var(--text-1);
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.modal-body .form-group {
-  margin-bottom: 20px;
-  max-width: none;
-}
-
-.modal-body .form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-1);
-  font-size: 14px;
-}
-
-.modal-body .form-group input,
-.modal-body .form-group select,
-.modal-body .form-group textarea {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-base);
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.modal-body .form-group input:focus,
-.modal-body .form-group select:focus,
-.modal-body .form-group textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
-}
-
-.modal-body .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 20px 24px;
-  border-top: 1px solid var(--border);
-  background-color: var(--bg);
-  margin: 24px -24px -24px;
-  padding: 20px 24px;
-}
-
-/* 详情项样式 */
-.detail-item {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.detail-item label {
-  width: 120px;
-  font-weight: 500;
-  color: var(--text-1);
-  flex-shrink: 0;
-  font-size: 14px;
-}
-
-.detail-item span {
-  flex: 1;
-  color: var(--text-2);
-  font-size: 14px;
+  
+  .chat-body {
+    padding: 16px;
+  }
+  
+  .message-item {
+    max-width: 85%;
+  }
+  
+  .chat-footer {
+    padding: 12px 16px;
+  }
 }
 </style>
