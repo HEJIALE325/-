@@ -156,7 +156,9 @@ const sendMessage = async () => {
     if (response.code === 0) {
       // 更新消息状态
       const lastMessage = messages.value[messages.value.length - 1]
-      lastMessage.id = response.data.id
+      if (response.data && response.data.id) {
+        lastMessage.id = response.data.id
+      }
     } else {
       message.error('发送失败')
       // 移除失败的消息

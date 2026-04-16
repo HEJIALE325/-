@@ -3,15 +3,24 @@
     <router-view />
     <Message />
     <Confirm />
-    <ChatComponent />
+    <ChatComponent v-if="!isAdminRoute" />
   </div>
 </template>
 
 <script setup>
 // App根组件
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Message from './components/Message.vue'
 import Confirm from './components/Confirm.vue'
 import ChatComponent from './components/ChatComponent.vue'
+
+const route = useRoute()
+
+// 判断是否是后台路由
+const isAdminRoute = computed(() => {
+  return route.path.startsWith('/admin')
+})
 </script>
 
 <style>
