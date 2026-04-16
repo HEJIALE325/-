@@ -205,9 +205,10 @@ const handleDelete = async (item) => {
   if (result) {
     try {
       isLoading.value = true
-      // 这里需要调用实际的API删除数据
-      // 暂时模拟成功
-      list.value = list.value.filter(i => i.id !== item.id)
+      // 调用实际的API删除数据
+      await configApi.delete([item.id])
+      // 重新获取列表数据
+      await getList()
       message.success('删除成功')
     } catch (error) {
       console.error('删除轮播图失败:', error)
@@ -249,27 +250,23 @@ const handleImageUpload = async (event) => {
 const handleSubmit = async () => {
   try {
     isLoading.value = true
-    // 这里需要调用实际的API提交数据
-    // 暂时模拟成功
+    // 准备提交数据
+    const submitData = {
+      name: formData.value.title,
+      value: formData.value.imageUrl
+    }
+    
     if (isEdit.value) {
       // 编辑现有数据
-      const index = list.value.findIndex(item => item.id === formData.value.id)
-      if (index !== -1) {
-        list.value[index] = { 
-          ...formData.value,
-          updateTime: new Date().toISOString()
-        }
-      }
+      submitData.id = formData.value.id
+      await configApi.update(submitData)
     } else {
       // 添加新数据
-      const newItem = {
-        id: list.value.length + 1,
-        ...formData.value,
-        createTime: new Date().toISOString(),
-        updateTime: new Date().toISOString()
-      }
-      list.value.push(newItem)
+      await configApi.save(submitData)
     }
+    
+    // 重新获取列表数据
+    await getList()
     closeModal()
     message.success(isEdit.value ? '编辑成功' : '新增成功')
   } catch (error) {

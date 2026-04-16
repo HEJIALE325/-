@@ -58,7 +58,7 @@
             <router-link 
               v-for="category in categories" 
               :key="category.codeIndex"
-              :to="category.codeIndex === '5' ? '/chongwujiyang' : `/products?category=${category.codeIndex}`" 
+              :to="category.codeIndex === '3' ? '/chongwujiyang' : category.codeIndex === '2' ? '/pets' : `/products?category=${category.codeIndex}`" 
               class="category-item"
             >
               <div class="category-icon">{{ category.icon || '�' }}</div>
@@ -378,22 +378,12 @@ const fetchBanners = async () => {
 
 // 获取商品分类数据
 const fetchCategories = async () => {
-  try {
-    const response = await dictionaryApi.getByDicCode('chongwuyongpin_types')
-    if (response.code === 0) {
-      categories.value = response.data.list || []
-    }
-  } catch (err) {
-    console.error('获取商品分类失败:', err)
-    // 如果获取失败，使用默认分类
-    categories.value = [
-      { codeIndex: '1', indexName: '狗狗专区', icon: '🐶' },
-      { codeIndex: '2', indexName: '猫咪专区', icon: '🐱' },
-      { codeIndex: '3', indexName: '小宠专区', icon: '🐹' },
-      { codeIndex: '4', indexName: '水族专区', icon: '🐠' },
-      { codeIndex: '5', indexName: '宠物寄养', icon: '🏠' }
-    ]
-  }
+  // 直接返回固定的三个分类
+  categories.value = [
+    { codeIndex: '1', indexName: '宠物用品', icon: '🛒' },
+    { codeIndex: '2', indexName: '宠物', icon: '🐶' },
+    { codeIndex: '3', indexName: '宠物寄养', icon: '🏠' }
+  ]
 }
 
 // 获取宠物列表
