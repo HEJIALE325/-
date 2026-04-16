@@ -3,6 +3,7 @@
     <router-view />
     <Message />
     <Confirm />
+    <ChatComponent />
   </div>
 </template>
 
@@ -10,6 +11,7 @@
 // App根组件
 import Message from './components/Message.vue'
 import Confirm from './components/Confirm.vue'
+import ChatComponent from './components/ChatComponent.vue'
 </script>
 
 <style>

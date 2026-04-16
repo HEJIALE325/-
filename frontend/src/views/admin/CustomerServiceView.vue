@@ -57,16 +57,15 @@
             <tbody>
               <tr v-for="item in list" :key="item.id">
                 <td>{{ item.id }}</td>
-                <td>{{ item.username }}</td>
                 <td>{{ item.yonghuName }}</td>
                 <td>{{ item.yonghuPhone }}</td>
-                <td>{{ item.content }}</td>
+                <td>{{ item.chatIssue }}</td>
                 <td>
-                  <span class="status-tag" :class="getStatusClass(item.status)">
-                    {{ getStatusText(item.status) }}
+                  <span class="status-tag" :class="getStatusClass(item.zhuangtaiTypes)">
+                    {{ getStatusText(item.zhuangtaiTypes) }}
                   </span>
                 </td>
-                <td>{{ formatDate(item.createTime) }}</td>
+                <td>{{ formatDate(item.issueTime) }}</td>
                 <td>
                   <button class="btn btn-secondary btn-sm" @click="handleView(item)">
                     查看
@@ -74,7 +73,7 @@
                   <button 
                     class="btn btn-primary btn-sm" 
                     @click="handleProcess(item)"
-                    v-if="item.status !== 'completed'"
+                    v-if="item.zhuangtaiTypes !== 2"
                   >
                     处理
                   </button>
@@ -120,10 +119,6 @@
             <span>{{ currentItem.id }}</span>
           </div>
           <div class="detail-item">
-            <label>用户名：</label>
-            <span>{{ currentItem.username }}</span>
-          </div>
-          <div class="detail-item">
             <label>用户名称：</label>
             <span>{{ currentItem.yonghuName }}</span>
           </div>
@@ -133,25 +128,25 @@
           </div>
           <div class="detail-item">
             <label>咨询内容：</label>
-            <span>{{ currentItem.content }}</span>
+            <span>{{ currentItem.chatIssue }}</span>
           </div>
           <div class="detail-item">
             <label>状态：</label>
-            <span class="status-tag" :class="getStatusClass(currentItem.status)">
-              {{ getStatusText(currentItem.status) }}
+            <span class="status-tag" :class="getStatusClass(currentItem.zhuangtaiTypes)">
+              {{ getStatusText(currentItem.zhuangtaiTypes) }}
             </span>
           </div>
-          <div class="detail-item" v-if="currentItem.response">
+          <div class="detail-item" v-if="currentItem.chatReply">
             <label>回复内容：</label>
-            <span>{{ currentItem.response }}</span>
+            <span>{{ currentItem.chatReply }}</span>
           </div>
           <div class="detail-item">
-            <label>创建时间：</label>
-            <span>{{ formatDate(currentItem.createTime) }}</span>
+            <label>咨询时间：</label>
+            <span>{{ formatDate(currentItem.issueTime) }}</span>
           </div>
-          <div class="detail-item" v-if="currentItem.updateTime">
-            <label>更新时间：</label>
-            <span>{{ formatDate(currentItem.updateTime) }}</span>
+          <div class="detail-item" v-if="currentItem.replyTime">
+            <label>回复时间：</label>
+            <span>{{ formatDate(currentItem.replyTime) }}</span>
           </div>
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" @click="closeDetailModal">关闭</button>
@@ -171,7 +166,7 @@
           <form @submit.prevent="handleSubmit">
             <div class="form-group">
               <label>咨询内容</label>
-              <div class="consult-content">{{ currentItem.content }}</div>
+              <div class="consult-content">{{ currentItem.chatIssue }}</div>
             </div>
             <div class="form-group">
               <label for="form-response">回复内容</label>
@@ -199,6 +194,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { message } from '../../utils/message'
+import { chatApi } from '../../utils/api'
 
 // 列表数据
 const list = ref([])
@@ -230,11 +226,11 @@ const formatDate = (dateString) => {
 // 获取状态样式类
 const getStatusClass = (status) => {
   switch (status) {
-    case 'pending':
+    case 0:
       return 'status-pending'
-    case 'processing':
+    case 1:
       return 'status-processing'
-    case 'completed':
+    case 2:
       return 'status-completed'
     default:
       return ''
@@ -244,11 +240,11 @@ const getStatusClass = (status) => {
 // 获取状态文本
 const getStatusText = (status) => {
   switch (status) {
-    case 'pending':
+    case 0:
       return '待处理'
-    case 'processing':
+    case 1:
       return '处理中'
-    case 'completed':
+    case 2:
       return '已完成'
     default:
       return status
@@ -259,33 +255,18 @@ const getStatusText = (status) => {
 const getList = async () => {
   try {
     isLoading.value = true
-    // 这里需要调用实际的API获取数据
-    // 暂时使用模拟数据
-    list.value = [
-      {
-        id: 1,
-        username: 'user1',
-        yonghuName: '张三',
-        yonghuPhone: '13800138000',
-        content: '咨询宠物寄养服务',
-        status: 'pending',
-        createTime: new Date().toISOString()
-      },
-      {
-        id: 2,
-        username: 'user2',
-        yonghuName: '李四',
-        yonghuPhone: '13900139000',
-        content: '咨询宠物用品',
-        status: 'completed',
-        response: '已回复咨询',
-        createTime: new Date().toISOString(),
-        updateTime: new Date().toISOString()
-      }
-    ]
-    totalPages.value = 1
+    const response = await chatApi.getPage({
+      page: currentPage.value,
+      limit: pageSize.value,
+      ...searchParams.value
+    })
+    if (response.code === 0) {
+      list.value = response.data.list || []
+      totalPages.value = Math.ceil(response.data.total / pageSize.value)
+    }
   } catch (error) {
     console.error('获取客服聊天列表失败:', error)
+    message.error('获取列表失败')
   } finally {
     isLoading.value = false
   }
@@ -317,7 +298,7 @@ const handleView = (item) => {
 const handleProcess = (item) => {
   currentItem.value = { ...item }
   formData.value = {
-    response: item.response || ''
+    response: item.chatReply || ''
   }
   showProcessModal.value = true
 }
@@ -326,18 +307,26 @@ const handleProcess = (item) => {
 const handleSubmit = async () => {
   try {
     isLoading.value = true
-    // 这里需要调用实际的API提交数据
-    // 暂时模拟成功
-    currentItem.value.response = formData.value.response
-    currentItem.value.status = 'completed'
-    currentItem.value.updateTime = new Date().toISOString()
-    // 更新列表数据
-    const index = list.value.findIndex(item => item.id === currentItem.value.id)
-    if (index !== -1) {
-      list.value[index] = { ...currentItem.value }
+    const response = await chatApi.update({
+      id: currentItem.value.id,
+      chatReply: formData.value.response,
+      replyTime: new Date(),
+      zhuangtaiTypes: 2
+    })
+    if (response.code === 0) {
+      currentItem.value.chatReply = formData.value.response
+      currentItem.value.zhuangtaiTypes = 2
+      currentItem.value.replyTime = new Date()
+      // 更新列表数据
+      const index = list.value.findIndex(item => item.id === currentItem.value.id)
+      if (index !== -1) {
+        list.value[index] = { ...currentItem.value }
+      }
+      closeProcessModal()
+      message.success('处理成功')
+    } else {
+      message.error('处理失败')
     }
-    closeProcessModal()
-    message.success('处理成功')
   } catch (error) {
     console.error('处理咨询失败:', error)
     message.error('处理失败')
