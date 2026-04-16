@@ -115,28 +115,41 @@ const getChatHistory = async () => {
   }
 }
 
+// 格式化日期为后端期望的格式
+const formatDateForBackend = (date) => {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 // 发送消息
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
-  
+
   const messageContent = inputMessage.value.trim()
-  
+  const currentTime = new Date()
+
   // 先添加到消息列表
   const newMessage = {
     content: messageContent,
-    time: new Date(),
+    time: currentTime,
     type: 'user',
     status: 0
   }
   messages.value.push(newMessage)
   inputMessage.value = ''
   scrollToBottom()
-  
+
   try {
     // 发送到后端
     const response = await chatApi.add({
       chatIssue: messageContent,
-      issueTime: new Date(),
+      issueTime: formatDateForBackend(currentTime),
       zhuangtaiTypes: 0,
       chatTypes: 0
     })
