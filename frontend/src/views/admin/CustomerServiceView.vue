@@ -303,14 +303,27 @@ const handleProcess = (item) => {
   showProcessModal.value = true
 }
 
+// 格式化日期为后端期望的格式
+const formatDateForBackend = (date) => {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 // 提交回复
 const handleSubmit = async () => {
   try {
     isLoading.value = true
+    const currentTime = new Date()
     const response = await chatApi.update({
       id: currentItem.value.id,
       chatReply: formData.value.response,
-      replyTime: new Date(),
+      replyTime: formatDateForBackend(currentTime),
       zhuangtaiTypes: 2
     })
     if (response.code === 0) {
