@@ -282,9 +282,12 @@ const checkNewMessages = async () => {
       })
       
       if (newMessages.length > 0) {
+        // 过滤出真正的新管理员回复
+        const newAdminMessages = newMessages.filter(msg => msg.type === 'admin')
+        
         messages.value = [...messages.value, ...newMessages].sort((a, b) => new Date(a.time) - new Date(b.time))
-        if (!showChatWindow.value) {
-          unreadCount.value += newMessages.filter(msg => msg.type === 'admin').length
+        if (!showChatWindow.value && newAdminMessages.length > 0) {
+          unreadCount.value += newAdminMessages.length
         }
         scrollToBottom()
       }
