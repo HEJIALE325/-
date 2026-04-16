@@ -265,6 +265,39 @@ const handleSearch = () => {
 const selectUser = async (user) => {
   selectedUser.value = user
   await getChatMessages(user.yonghuId)
+  
+  // 将该用户的所有待处理消息更新为处理中状态
+  await markAsProcessing(user.yonghuId)
+}
+
+// 标记消息为处理中
+const markAsProcessing = async (yonghuId) => {
+  try {
+    // 获取该用户的待处理消息
+    const response = await chatApi.getList({
+      yonghuId: yonghuId,
+      zhuangtaiTypes: 0, // 待处理状态
+      page: 1,
+      limit: 100
+    })
+    
+    if (response.code === 0 && response.data.list && response.data.list.length > 0) {
+      const pendingMessages = response.data.list
+      
+      // 批量更新状态
+      for (const msg of pendingMessages) {
+        await chatApi.update({
+          id: msg.id,
+          zhuangtaiTypes: 1 // 处理中状态
+        })
+      }
+      
+      // 重新获取用户列表，更新未读状态
+      await getUserList()
+    }
+  } catch (error) {
+    console.error('标记消息为处理中失败:', error)
+  }
 }
 
 // 获取聊天消息
